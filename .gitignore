@@ -111,3 +111,4 @@ buscarPosteosFacebook/*
 #ignorar configuraciones
 config.json
 .vscode/settings.json
+prueba/*

@@ -21,7 +21,8 @@ def getFBLogin(fb_user, fb_password, gecko_binary, gecko_driver_exe, headless=Fa
     body.send_keys(Keys.TAB)
     body.send_keys(fb_password)
     body.send_keys(Keys.TAB)
-    body.send_keys(Keys.ENTER)
+    loginbutton = driver.find_element_by_css_selector("button[name='login']")
+    loginbutton.send_keys(Keys.ENTER)
     print("Facebook login...")
     sleep(20)
     return driver
@@ -53,40 +54,40 @@ def getFBSearchPage(driver, page, year):
     search_textbox.send_keys(page)
     search_textbox.send_keys(Keys.ENTER)
     sleep(20)
-    body = driver.find_element_by_xpath('//body')
-    body.send_keys(Keys.TAB)
-    body.send_keys(Keys.TAB)
-    body.send_keys(Keys.TAB)
-    body.send_keys(Keys.ENTER)
-    sleep(5)
+    #body = driver.find_element_by_xpath('//body')
+    #body.send_keys(Keys.TAB)
+    #body.send_keys(Keys.TAB)
+    #body.send_keys(Keys.TAB)
+    #body.send_keys(Keys.ENTER)
+    #sleep(5)
     
-    body = driver.find_element_by_xpath('//body')
-    body.send_keys(Keys.TAB)
-    body.send_keys(Keys.TAB)
-    body.send_keys(Keys.TAB)
-    body.send_keys(Keys.TAB)
-    body.send_keys(Keys.TAB)
-    body.send_keys(Keys.ENTER)
-    sleep(5)
+    #body = driver.find_element_by_xpath('//body')
+    #body.send_keys(Keys.TAB)
+    #body.send_keys(Keys.TAB)
+    #body.send_keys(Keys.TAB)
+    #body.send_keys(Keys.TAB)
+    #body.send_keys(Keys.TAB)
+    #body.send_keys(Keys.ENTER)
+    #sleep(5)
     
     # tantos para abajo como años
-    year_count = datetime.now().year - int(year)
-    for _ in range(0, year_count):
-        body.send_keys(Keys.ARROW_DOWN)
-    body.send_keys(Keys.ENTER)
+    #year_count = datetime.now().year - int(year)
+    #for _ in range(0, year_count):
+    #    body.send_keys(Keys.ARROW_DOWN)
+    #body.send_keys(Keys.ENTER)
 
-    sleep(2)
+    #sleep(2)
 
-    search_textbox = driver.find_element_by_css_selector("input[type='search'][aria-label]")
-    search_textbox.send_keys(Keys.TAB)
-    for _ in range(0, 17):
-        elem = driver.switch_to_active_element()
-        elem.send_keys(Keys.TAB)
-        sleep(1)
+    #search_textbox = driver.find_element_by_css_selector("input[type='search'][aria-label]")
+    #search_textbox.send_keys(Keys.TAB)
+    #for _ in range(0, 17):
+    #    elem = driver.switch_to_active_element()
+    #    elem.send_keys(Keys.TAB)
+    #    sleep(1)
 
-    sleep(20)
-    elem = driver.switch_to_active_element()
-    elem.send_keys(' ' + page)
+    #sleep(20)
+    #elem = driver.switch_to_active_element()
+    #elem.send_keys(' ' + page)
 
     sleep(2)
     elem = driver.switch_to.active_element
