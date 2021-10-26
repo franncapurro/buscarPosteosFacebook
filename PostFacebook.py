@@ -104,7 +104,7 @@ class PostFacebook():
             link_dict = urllib.parse.parse_qs(a_link_url_query)
             link = link_dict.get('u', [''])[0]
             # link_domain
-            link_domain_div = self.html_bs.find_all('span', {'class': 'oi732d6d ik7dh3pa d2edcug0 qv66sw1b c1et5uql a8c37x1j hop8lmos enqfppq2 e9vueds3 j5wam9gi knj5qynh m9osqain ni8dbmo4 stjgntxs ltmttdrg g0qnabr5'})
+            link_domain_div = self.html_bs.find_all('span', {'class': 'd2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 tia6h79c fe6kdd0r mau55g9w c8b282yb iv3no6db e9vueds3 j5wam9gi b1v8xokw m9osqain'})
             if link_domain_div:
                 link_domain = link_domain_div[0].getText()
             posts[0] = 'link'
@@ -225,7 +225,25 @@ class PostFacebook():
             a_date_text = a_date[0].getText()
             a_date_text = a_date_text.replace('de', '')
             a_date_text = a_date_text.strip()
-            post_date = datetime.strptime(a_date_text, '%d %B %Y')+ timedelta(hours=3)
+
+            if 'h' in a_date_text:
+                a_date_text = a_date_text.replace(' ', '')
+                a_date_text = a_date_text.replace('h', '')
+                hours = -1*int(a_date_text)
+                post_date = datetime.now() + timedelta(hours=hours)
+            elif 'min' in a_date_text:
+                a_date_text = a_date_text.replace(' ', '')
+                a_date_text = a_date_text.replace('min', '')
+                minutes = -1*int(a_date_text)
+                post_date = datetime.now() + timedelta(minutes=minutes)
+            elif ' d' in a_date_text:
+                a_date_text = a_date_text.replace(' ', '')
+                a_date_text = a_date_text.replace('d', '')
+                days = -1*int(a_date_text)
+                post_date = datetime.now() + timedelta(hours=24*days)
+            else:
+                a_date_text = a_date_text.replace('a las', '')
+                post_date = datetime.strptime(a_date_text, '%d %B %Y')+ timedelta(hours=3)
             
             post_published_unix = datetime.timestamp(post_date)
             post_date = datetime.utcfromtimestamp(int(post_published_unix))
@@ -302,18 +320,19 @@ class PostFacebook():
 
     def getTituloLink(self):
         titulo = ""
-        divTitulo = self.html_bs.find_all('div', {'class': 'l9j0dhe7 stjgntxs ni8dbmo4'})
-
+        divTitulo = self.html_preview_bs.find_all('span', {'class': 'a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7'})
         # Si la lista no esta vacia, tengo un titulo
         if divTitulo:
-            titulo = divTitulo[0].getText()
+            titulo = divTitulo[1].getText()
         return titulo
 
     def getSharesCount(self, fbStringToNumber):
         shares_count = 0
-        shares_count_a = self.html_bs.find_all('span', {'class': 'oi732d6d ik7dh3pa d2edcug0 qv66sw1b c1et5uql a8c37x1j muag1w35 ew0dbk1b jq4qci2q a3bd9o3v knj5qynh m9osqain'})
+        shares_count_a = self.html_bs.find_all('span', {'class': 'd2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d9wwppkn fe6kdd0r mau55g9w c8b282yb hrzyx87i jq4qci2q a3bd9o3v b1v8xokw m9osqain'})
         if shares_count_a:
             shares_count_a_text = shares_count_a[1].getText()
+            if 'comentario' in shares_count_a_text:
+                return shares_count
             shares_count_text = shares_count_a_text.replace(' veces compartido', '').replace(' vez compartido', '')
             shares_count = fbStringToNumber.convertStringToNumber(shares_count_text)
         return shares_count
@@ -328,9 +347,11 @@ class PostFacebook():
 
     def getCommentsCount(self, fbStringToNumber):
         comments_count = 0
-        comments_count_a = self.html_preview_bs.find_all('span', {'class': 'oi732d6d ik7dh3pa d2edcug0 qv66sw1b c1et5uql a8c37x1j muag1w35 ew0dbk1b jq4qci2q a3bd9o3v knj5qynh m9osqain'})
-        if comments_count_a:
-            comments_count_a_text = comments_count_a[0].getText()
+        comments_count_a = self.html_preview_bs.find_all('span', {'class': 'd2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d9wwppkn fe6kdd0r mau55g9w c8b282yb hrzyx87i jq4qci2q a3bd9o3v b1v8xokw m9osqain'})
+        if len(comments_count_a) > 1:
+            comments_count_a_text = comments_count_a[1].getText()
+            if 'compartido' in comments_count_a_text:
+                return comments_count
             comments_count_text = comments_count_a_text.replace(' comentarios', '').replace(' comentario', '')
             comments_count = fbStringToNumber.convertStringToNumber(comments_count_text)
         return comments_count
@@ -386,7 +407,7 @@ class PostFacebook():
         return post_message
 
     def getReactions(self, fbStringToNumber):
-        reaction_count_tags = self.html_preview_bs.find_all('div', {'class': 'oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl l9j0dhe7 abiwlrkh p8dawk7l'})
+        reaction_count_tags = self.html_preview_bs.find_all('div', {'class': 'oajrlxb2 gs1a9yip g5ia77u1 mtkw9kbi tlpljxtp qensuy8j ppp5ayq2 goun2846 ccm00jje s44p3ltw mk2mc5f4 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv nhd2j8a9 pq6dq46d mg4g778l btwxx1t3 pfnyh3mw p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x tgvbjcpo hpfvmrgz jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso l9j0dhe7 i1ao9s8h esuyzwwr f1sip0of du4w35lb lzcic4wl n00je7tq arfg74bv qs9ysxi8 k77z8yql abiwlrkh p8dawk7l'})
 
         like_count_fb = 0
         rea_LOVE = 0

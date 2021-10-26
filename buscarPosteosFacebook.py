@@ -2,6 +2,7 @@ import os
 import platform
 from datetime import datetime
 from time import sleep
+import traceback
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -73,7 +74,7 @@ def getFBSearchPage(driver, page, year):
     # tantos para abajo como años
     #year_count = datetime.now().year - int(year)
     #for _ in range(0, year_count):
-    #    body.send_keys(Keys.ARROW_DOWN)
+    #    body.send_keys(Keys.ARRgit OW_DOWN)
     #body.send_keys(Keys.ENTER)
 
     #sleep(2)
@@ -164,7 +165,7 @@ def exportNetvizzCsv(config, posts_links):
             posts_fb.append(posts)
             sleep(17)
         except Exception as ex:
-            print("ERROR" + str(ex)) 
+            print("ERROR" + str(ex) + traceback.format_exc()) 
     
     fb_login.quit()
     print('END Post')
