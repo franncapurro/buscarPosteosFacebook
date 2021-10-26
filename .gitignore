@@ -112,3 +112,4 @@ buscarPosteosFacebook/*
 config.json
 .vscode/settings.json
 prueba/*
+config.backup.json
