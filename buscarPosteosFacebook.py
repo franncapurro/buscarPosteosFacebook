@@ -8,7 +8,8 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.firefox.service import Service
+from webdriver_manager.firefox import GeckoDriverManager
 
 import ConfigManager
 import PostFacebook
@@ -39,8 +40,11 @@ def getFBPage(url, gecko_binary, gecko_driver_exe, headless=False):
     ffprofile.set_preference("dom.webnotifications.enabled", False)
 
     if platform.system() == 'Windows':
-        binary = FirefoxBinary(gecko_binary)
-        driver = webdriver.Firefox(firefox_binary=binary, executable_path=gecko_driver_exe, options=ffoptions, firefox_profile=ffprofile)
+        ffoptions.binary_location = gecko_binary
+        # Download the corresponding firefox driver
+        executable_path = GeckoDriverManager().install()
+        s = Service(executable_path)
+        driver = webdriver.Firefox(service=s, options=ffoptions)
     else:
         driver = webdriver.Firefox(options=ffoptions, firefox_profile=ffprofile)
 
