@@ -16,6 +16,7 @@
 #    along with buscarPostFacebook; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+import hashlib
 import urllib.request
 import bs4
 import os
@@ -31,10 +32,13 @@ class PostFacebook():
     def __init__(self, urlLink, fb_login, html_preview):
         self.urlLink = urlLink
         self.fb_login = fb_login
+        # HTML obtained from search page
         self.html_preview = html_preview
         self.html_preview_bs = self._getHtmlPost(html_preview)
+        # HTML obtained from the publication specific link
         self.html_raw = self._getHtmlFacebook()
         self.html_bs = self._getHtmlPost(self.html_raw)
+
         self.fbStringToNumber = FacebookStringToNumber()
 
     def _getHtmlFacebook(self):
@@ -64,7 +68,9 @@ class PostFacebook():
         text_output_file = TextOutputFile(str(self.html_raw))
         text_output_filename = "post_page_" + page_id + "_" + post_id + ".html"
         output_filename_html = os.path.join(base_path, text_output_filename)
-        text_output_file.save(output_filename_html)
+        # use a hash to create a unique simpler filename
+        hash_object = hashlib.md5(output_filename_html.encode())
+        text_output_file.save(f"file_{hash_object.hexdigest()}")
 
     def ParsePostHTML(self):
         posts = []
@@ -222,7 +228,7 @@ class PostFacebook():
         locale.setlocale(locale.LC_TIME, 'es_AR')
         a_date = self.html_bs.find_all('a', {'class': 'oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gmql0nx0 gpro0wi8 b1v8xokw'})
         if a_date:
-            a_date_text = a_date[0].getText()
+            a_date_text = a_date[0].get("aria-label")
             a_date_text = a_date_text.replace('de', '')
             a_date_text = a_date_text.strip()
 
@@ -241,7 +247,7 @@ class PostFacebook():
                 a_date_text = a_date_text.replace('d', '')
                 days = -1*int(a_date_text)
                 post_date = datetime.now() + timedelta(hours=24*days)
-            else:
+            elif "a las" in a_date_text:
                 a_date_text = a_date_text.replace('a las', '')
                 post_date = datetime.strptime(a_date_text, '%d %B %Y')+ timedelta(hours=3)
             
@@ -262,11 +268,26 @@ class PostFacebook():
         return link
 
     def getPageName(self):
-        medio_span = self.html_bs.find_all('a', {'class': 'oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl oo9gr5id gpro0wi8 lrazzd5p'})
-        medio_span_text = None
-        if medio_span:
-            medio_span_text = medio_span[0].getText()
-        return medio_span_text
+        # Find a tags satisfying some condition
+        class_in_a_tags = []
+        a_tags = self.html_bs.find_all('a')
+        for a_tag in a_tags:
+            class_attr = a_tag.get("class")
+            if "oajrlxb2" in class_attr:
+                class_in_a_tags.append(a_tag)
+        # Find a specific a tag
+        index_one_less = 0
+        for index, elem in enumerate(class_in_a_tags):
+            text = elem.getText()
+            if "Información" in text:
+                index_one_less = index
+                break
+        index_wanted = index_one_less + 1
+        a_tag_wanted = class_in_a_tags[index_wanted]
+        text_wanted = None
+        if a_tag_wanted:
+            text_wanted = a_tag_wanted.getText()
+        return text_wanted
 
     def getTieneHashtags(self, hashtagsLista):
         tiene_hashtags = False
@@ -319,12 +340,16 @@ class PostFacebook():
         return mencionesLista, hashtagsLista
 
     def getTituloLink(self):
-        titulo = ""
-        divTitulo = self.html_preview_bs.find_all('span', {'class': 'a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7'})
-        # Si la lista no esta vacia, tengo un titulo
-        if divTitulo:
-            titulo = divTitulo[1].getText()
-        return titulo
+        span_tags = self.html_bs.find_all('span', {'class': 'a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7 ojkyduve'})
+        index_minus_one = 0
+        for i, span_tag in enumerate(span_tags):
+            span_text_inside = span_tag.getText()
+            if "Anteriores" in span_text_inside:
+                index_minus_one = i
+                break
+        span_tag_wanted = span_tags[index_minus_one + 1]
+        text_wanted = span_tag_wanted.getText()
+        return text_wanted
 
     def getSharesCount(self, fbStringToNumber):
         shares_count = 0

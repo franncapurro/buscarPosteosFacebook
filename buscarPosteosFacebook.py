@@ -117,22 +117,26 @@ def getFBPostsLinks(driver, scroll_count):
         print('scroll: ' + str(scroll_nro) + ' ' + date_time)
         scroll_nro = scroll_nro + 1
         sleep(5)
-
     sleep(5)
-
     body = driver.find_element_by_xpath('//body')
     posts = body.find_elements_by_class_name('sjgh65i0')
-
-    posts_links = []
-    for html_preview in posts:
-        links = html_preview.find_elements_by_css_selector("a[href]")
-        for link in links:
-            href = link.get_attribute("href")
-            if 'posts' in href:
-                print(href)
-                posts_links.append((href, html_preview.get_attribute("innerHTML")))
-
-    return posts_links
+    posts_links_html = []
+    for post in posts:
+        specific_span_tags = post.find_elements_by_xpath("//span[contains(@id, 'jsc_c')]")
+        for sst in specific_span_tags:
+            if "h" and "·" in sst.text:
+                a_tags = sst.find_elements_by_tag_name("a")
+                for a_tag in a_tags:
+                    if "h" in a_tag.get_attribute("aria-label") and a_tag.get_attribute("role")=="link" and len(a_tags)==1:
+                        # sometimes the obtained href value obtained might not be the specific link to the FB pub
+                        # in those case, it'll change to the correct link once a click is executed over it
+                        if "search" in a_tag.get_attribute("href"):
+                            a_tag.click()
+                            sleep(1)
+                        href = a_tag.get_attribute("href")
+                        inner_html = post.get_attribute("innerHTML")
+                        posts_links_html.append((href, inner_html))
+    return posts_links_html
 
 
 def HasScroll(driver):
@@ -189,7 +193,13 @@ try:
 except Exception as ex:
     print("ERROR" + str(ex))
 
-exportLinksCsv(config, posts_links)
-print('Post Count: ', len(posts_links))
+# this is because some links are repeated
+posts_links_to_scrap = []
+for url, html in posts_links:
+    if url not in [p_l[0] for p_l in posts_links_to_scrap]:
+        posts_links_to_scrap.append((url, html))
+
+exportLinksCsv(config, posts_links_to_scrap)
+print('Post Count: ', len(posts_links_to_scrap))
 driver.quit()
-exportNetvizzCsv(config, posts_links)
+exportNetvizzCsv(config, posts_links_to_scrap)
