@@ -109,7 +109,9 @@ data/*.html
 buscarPosteosFacebook/*
 
 #ignorar configuraciones
-config.json
+./config.json
 .vscode/settings.json
 prueba/*
 config.backup.json
+file_*
+ln_posts_*
