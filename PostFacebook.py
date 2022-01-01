@@ -26,6 +26,9 @@ from datetime import datetime, timedelta
 from FacebookStringToNumber import FacebookStringToNumber
 from TextOutputFile import TextOutputFile
 from selenium.webdriver.common.keys import Keys
+from urllib.request import urlretrieve
+
+from PIL import Image
 
 
 class PostFacebook():
@@ -364,7 +367,7 @@ class PostFacebook():
 
     def getReactionsCount(self, fbStringToNumber):
         reactions_count = 0
-        reactions_count_span = self.html_preview_bs.find_all('span', {'class': 'pcp91wgn'})
+        reactions_count_span = self.html_bs.find_all('span', {'class': 'gpro0wi8 pcp91wgn'})
         if reactions_count_span:
             reactions_count_text = reactions_count_span[0].getText()
             reactions_count = fbStringToNumber.convertStringToNumber(reactions_count_text)
@@ -372,7 +375,7 @@ class PostFacebook():
 
     def getCommentsCount(self, fbStringToNumber):
         comments_count = 0
-        comments_count_a = self.html_preview_bs.find_all('span', {'class': 'd2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d9wwppkn fe6kdd0r mau55g9w c8b282yb hrzyx87i jq4qci2q a3bd9o3v b1v8xokw m9osqain'})
+        comments_count_a = self.html_bs.find_all('span', {'class': 'd2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 fe6kdd0r mau55g9w c8b282yb d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain'})
         if len(comments_count_a) > 1:
             comments_count_a_text = comments_count_a[1].getText()
             if 'compartido' in comments_count_a_text:
@@ -431,33 +434,146 @@ class PostFacebook():
         
         return post_message
 
-    def getReactions(self, fbStringToNumber):
-        reaction_count_tags = self.html_preview_bs.find_all('div', {'class': 'oajrlxb2 gs1a9yip g5ia77u1 mtkw9kbi tlpljxtp qensuy8j ppp5ayq2 goun2846 ccm00jje s44p3ltw mk2mc5f4 rt8b4zig n8ej3o3l agehan2d sk4xxmp2 rq0escxv nhd2j8a9 pq6dq46d mg4g778l btwxx1t3 pfnyh3mw p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x tgvbjcpo hpfvmrgz jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso l9j0dhe7 i1ao9s8h esuyzwwr f1sip0of du4w35lb lzcic4wl n00je7tq arfg74bv qs9ysxi8 k77z8yql abiwlrkh p8dawk7l'})
+    def click_to_see_all_reactions(self):
+        """
+        Click a button to display more information about reactions on the pub
+        Returns True if the click was done, False otherwise.
+        Constant TEXT_DISPLAYED may need to be changed regularly.
+        """
+        TEXT_DISPLAYED = 'Consulta quién reaccionó a esto'
+        for ps in self.fb_login.find_elements_by_tag_name("span"):
+            if ps.get_attribute("aria-label") == TEXT_DISPLAYED:
+                ps.click()
+                return True
+        return False
+        
 
-        like_count_fb = 0
-        rea_LOVE = 0
-        rea_HAHA = 0
-        rea_WOW = 0
-        rea_SAD = 0
-        rea_ANGRY = 0
-        for a in reaction_count_tags:
-            reaction_label = a.get('aria-label')
-            if 'Me entristece' in reaction_label:
-                reaction_label = reaction_label.replace('Me entristece:', '').strip()
-                rea_SAD = fbStringToNumber.convertStringToNumber(reaction_label)
-            elif 'Me divierte' in reaction_label:
-                reaction_label = reaction_label.replace('Me divierte:', '').strip()
-                rea_HAHA = fbStringToNumber.convertStringToNumber(reaction_label)
-            elif 'Me encanta' in reaction_label:
-                reaction_label = reaction_label.replace('Me encanta:', '').strip()
-                rea_LOVE = fbStringToNumber.convertStringToNumber(reaction_label)
-            elif 'Me asombra' in reaction_label:
-                reaction_label = reaction_label.replace('Me asombra:', '').strip()
-                rea_WOW = fbStringToNumber.convertStringToNumber(reaction_label)
-            elif 'Me enoja' in reaction_label:
-                reaction_label = reaction_label.replace('Me enoja:', '').strip()
-                rea_ANGRY = fbStringToNumber.convertStringToNumber(reaction_label)
-            elif 'Me gusta' in reaction_label:
-                reaction_label = reaction_label.replace('Me gusta:', '').strip()
-                like_count_fb = fbStringToNumber.convertStringToNumber(reaction_label)
+
+    def get_divs_for_main_reactions(self):
+        """
+        Once you've clicked on the button to display more inf. about reactions
+        you may see "main reactions" and "additional reactions". An addtitional
+        reaction is one that needs a button "Más" to be displayed. A main reaction
+        is one that is not additional.
+        Return a list of divs containing data about main reactions.
+        Constant CLASS_NAME may need to be changed regularly.
+        """
+        CLASS_NAME = "bp9cbjyn rq0escxv j83agx80 pfnyh3mw l9j0dhe7 cehpxlet aodizinl hv4rvrfc ofv0k9yr dati1w0a"
+        main_reactions_divs = []
+        candidates_divs = self.fb_login.find_elements_by_xpath(f"//div[@class='{CLASS_NAME}']")
+        for candidate in candidates_divs:
+            # next let's verify its text is a number
+            # so we know it's a main reaction div
+            try:
+                int(candidate.text)
+                main_reactions_divs.append(candidate)
+            except:
+                pass
+        return main_reactions_divs
+    
+    def click_to_see_more_reactions(self):
+        """
+        Click a button to display information about additional reactions
+        Returns True if the click was done, False otherwise.
+        Constant CLASS_NAME may need to be changed regularly.
+        Constant TEXT_DISPLAYED may need to be changed regularly.
+        """
+        CLASS_NAME = "q9uorilb l9j0dhe7 j1lvzwm4 ae0w7mvl r9glsfau gbic8f20 tgvbjcpo ni8dbmo4 stjgntxs"
+        TEXT_DISPLAYED = 'Más'
+        potential_blocks = self.fb_login.find_elements_by_xpath(F"//div[@class='{CLASS_NAME}']")
+        for pb in potential_blocks:
+            inner_divs = pb.find_elements_by_xpath("//div[@aria-hidden='false']")
+            for in_d in inner_divs:
+                if TEXT_DISPLAYED in in_d.text:
+                    pb.click()
+                    sleep(0.25)
+                    return True
+        return False
+    
+    def get_divs_for_additional_reactions(self):
+        """
+        Once you've clicked on the button to display more inf. about reactions
+        you may see "main reactions" and "additional reactions". An addtitional
+        reaction is one that needs a button "Más" to be displayed. A main reaction
+        is one that is not additional.
+        Return a list of divs containing data about additional reactions.
+        """
+        add_reactions = []
+        candidate_divs = self.fb_login.find_elements_by_xpath("//div[@role='menuitemradio']")
+        for candidate in candidate_divs:
+            try:
+            # next let's verify its text is a number
+            # so we know it's an additional reaction div
+                int(candidate.text)
+                add_reactions.append(candidate)
+            except:
+                pass
+        return add_reactions
+    
+    def identify_reactions(self, divs_with_image):
+        """
+        Given a list of divs containing each one data about a type of reaction,
+        it returns a dict with key-values "type-of-reaction": "times-reacted".
+        """
+        like = Image.open('like.png')
+        love = Image.open('love.png')
+        haha = Image.open('haha.png')
+        wow = Image.open('wow.png')
+        sad = Image.open('sad.png')
+        hate = Image.open('hate.png')
+        care = Image.open('care.png')
+        reactions = {
+            "likes": 0,
+            "loves": 0,
+            "hahas": 0,
+            "wows":0,
+            "sads": 0,
+            "hates": 0,
+            "cares": 0,
+        }
+        for div_w_img in divs_with_image:
+            img_tags = div_w_img.find_elements_by_tag_name("img")
+            img_src = img_tags[0].get_attribute("src")
+            # download image into a file
+            urlretrieve(img_src, 'img_to_be_compared.png')
+            # open the image file
+            img_to_be_compared = Image.open('img_to_be_compared.png')
+            # compare with the reaction image models
+            if list(like.getdata()) == list(img_to_be_compared.getdata()):
+                reactions["likes"] = div_w_img.text
+            elif list(love.getdata()) == list(img_to_be_compared.getdata()):
+                reactions["loves"] = div_w_img.text
+            elif list(haha.getdata()) == list(img_to_be_compared.getdata()):
+                reactions["hahas"] = div_w_img.text
+            elif list(wow.getdata()) == list(img_to_be_compared.getdata()):
+                reactions["wows"] = div_w_img.text
+            elif list(sad.getdata()) == list(img_to_be_compared.getdata()):
+                reactions["sads"] = div_w_img.text
+            elif list(hate.getdata()) == list(img_to_be_compared.getdata()):
+                reactions["hates"] = div_w_img.text
+            elif list(care.getdata()) == list(img_to_be_compared.getdata()):
+                reactions["cares"] = div_w_img.text
+        return reactions
+
+    def getReactions(self, fbStringToNumber):
+        # Click on "Consulta quién reaccionó a esto"
+        self.click_to_see_all_reactions()
+        # Click on "Más"
+        sleep(2)
+        self.click_to_see_more_reactions()
+        # Number of reactions for reactions that are not inside the "Más" button
+        main_reaction_divs = self.get_divs_for_main_reactions()
+        # Number of reactions only for reactions that are inside the "Más" button
+        add_reaction_divs = self.get_divs_for_additional_reactions()
+        # Identify every number with a kind of reaction
+        reactions = self.identify_reactions(main_reaction_divs+add_reaction_divs)
+
+        like_count_fb = reactions["likes"]
+        rea_LOVE = reactions["loves"]
+        rea_HAHA = reactions["hahas"]
+        rea_WOW = reactions["wows"]
+        rea_SAD = reactions["sads"]
+        rea_ANGRY = reactions["hates"]
+        rea_CARE = reactions["cares"]
+
         return like_count_fb, rea_LOVE, rea_WOW, rea_HAHA, rea_SAD, rea_ANGRY
