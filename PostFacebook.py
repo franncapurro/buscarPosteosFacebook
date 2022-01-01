@@ -559,6 +559,7 @@ class PostFacebook():
         # Click on "Consulta quién reaccionó a esto"
         self.click_to_see_all_reactions()
         # Click on "Más"
+        # TODO: Fails if the "Más" button is not there, check it's there first
         sleep(2)
         self.click_to_see_more_reactions()
         # Number of reactions for reactions that are not inside the "Más" button

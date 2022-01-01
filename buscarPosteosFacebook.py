@@ -131,6 +131,7 @@ def getFBPostsLinks(driver, scroll_count):
                         # sometimes the obtained href value obtained might not be the specific link to the FB pub
                         # in those case, it'll change to the correct link once a click is executed over it
                         if "search" in a_tag.get_attribute("href"):
+                            # TODO: the syntax to find this object can be simplified and efienciency-improved
                             a_tag.click()
                             sleep(1)
                         href = a_tag.get_attribute("href")
