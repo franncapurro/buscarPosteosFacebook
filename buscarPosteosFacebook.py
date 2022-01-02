@@ -26,7 +26,7 @@ def getFBLogin(fb_user, fb_password, gecko_binary, gecko_driver_exe, headless=Fa
     loginbutton = driver.find_element_by_css_selector("button[name='login']")
     loginbutton.send_keys(Keys.ENTER)
     print("Facebook login...")
-    sleep(20)
+    sleep(15)
     return driver
 
 
@@ -58,7 +58,7 @@ def getFBSearchPage(driver, page, year):
     search_textbox = driver.find_element_by_css_selector("input[type='search'][aria-label]")
     search_textbox.send_keys(page)
     search_textbox.send_keys(Keys.ENTER)
-    sleep(20)
+    sleep(15)
     #body = driver.find_element_by_xpath('//body')
     #body.send_keys(Keys.TAB)
     #body.send_keys(Keys.TAB)
@@ -107,9 +107,9 @@ def getFBSearchPage(driver, page, year):
     return driver
 
 
-def getFBPostsLinks(driver, scroll_count):
+def getFBPostsLinks(driver, amount_of_publications):
     scroll_nro = 0
-    while HasScroll(driver) and scroll_nro < scroll_count:
+    while HasScroll(driver) and scroll_nro < 2:
         body = driver.find_element_by_xpath('//body')
         body.send_keys(Keys.CONTROL + Keys.END)
         now = datetime.now()
@@ -121,22 +121,43 @@ def getFBPostsLinks(driver, scroll_count):
     body = driver.find_element_by_xpath('//body')
     posts = body.find_elements_by_class_name('sjgh65i0')
     posts_links_html = []
-    for post in posts:
+    len_posts = len(posts)
+    for i, post in enumerate(posts):
+        print(f"POST {i+1} de {len_posts}", "*"*30)
         specific_span_tags = post.find_elements_by_xpath("//span[contains(@id, 'jsc_c')]")
-        for sst in specific_span_tags:
-            if "h" and "·" in sst.text:
+        len_spec_span_tags = len(specific_span_tags)
+        for j, sst in enumerate(specific_span_tags):
+            # print(f"SPAN {j+1} de {len_spec_span_tags}", "-"*30)
+
+            if len(posts_links_html) >= amount_of_publications:
+                break
+
+            if "·" in sst.text:
                 a_tags = sst.find_elements_by_tag_name("a")
-                for a_tag in a_tags:
-                    if "h" in a_tag.get_attribute("aria-label") and a_tag.get_attribute("role")=="link" and len(a_tags)==1:
+                len_a_tags = len(a_tags)
+                for k, a_tag in enumerate(a_tags):
+
+                    if len(posts_links_html) >= amount_of_publications:
+                        break
+
+                    # print(f"SPAN {k+1} de {len_a_tags}", "."*30)
+                    if a_tag.get_attribute("role")=="link":
                         # sometimes the obtained href value obtained might not be the specific link to the FB pub
                         # in those case, it'll change to the correct link once a click is executed over it
                         if "search" in a_tag.get_attribute("href"):
-                            # TODO: the syntax to find this object can be simplified and efienciency-improved
-                            a_tag.click()
+
+                            print("\n", a_tag.get_attribute("href"))
                             sleep(1)
+                            #print("ABOUT TO BE CLICKED")
+                            a_tag.click()
+                            print("CLICKED")
+                            print(a_tag.get_attribute("href"))
+
                         href = a_tag.get_attribute("href")
+                        print(a_tag.get_attribute("aria-label"))
                         inner_html = post.get_attribute("innerHTML")
-                        posts_links_html.append((href, inner_html))
+                        if href not  in [el[0] for el in posts_links_html]:
+                            posts_links_html.append((href, inner_html))
     return posts_links_html
 
 
@@ -172,7 +193,7 @@ def exportNetvizzCsv(config, posts_links):
             post.SaveHtml(config.base_path)
             posts = post.ParsePostHTML()
             posts_fb.append(posts)
-            sleep(17)
+            sleep(10)
         except Exception as ex:
             print("ERROR" + str(ex) + traceback.format_exc()) 
     
