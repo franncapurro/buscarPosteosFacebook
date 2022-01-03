@@ -9,6 +9,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
+from termcolor import colored
 from webdriver_manager.firefox import GeckoDriverManager
 
 import ConfigManager
@@ -25,7 +26,7 @@ def getFBLogin(fb_user, fb_password, gecko_binary, gecko_driver_exe, headless=Fa
     body.send_keys(Keys.TAB)
     loginbutton = driver.find_element_by_css_selector("button[name='login']")
     loginbutton.send_keys(Keys.ENTER)
-    print("Facebook login...")
+    print(colored('Logged into Facebook', 'green'))
     sleep(15)
     return driver
 
@@ -49,14 +50,13 @@ def getFBPage(url, gecko_binary, gecko_driver_exe, headless=False):
         driver = webdriver.Firefox(options=ffoptions, firefox_profile=ffprofile)
 
     driver.get(url)
-    print("Opened url: " + str(url))
     sleep(5)
     return driver
 
 
 def getFBSearchPage(driver, page, year):
     search_textbox = driver.find_element_by_css_selector("input[type='search'][aria-label]")
-    search_textbox.send_keys(page)
+    search_textbox.send_keys(page.encode("utf_8").decode("utf_8"))
     search_textbox.send_keys(Keys.ENTER)
     sleep(15)
     #body = driver.find_element_by_xpath('//body')
@@ -108,56 +108,40 @@ def getFBSearchPage(driver, page, year):
 
 
 def getFBPostsLinks(driver, amount_of_publications):
+    AMOUNT_OF_SCROLLS = 5
     scroll_nro = 0
-    while HasScroll(driver) and scroll_nro < 2:
+    while HasScroll(driver) and scroll_nro < AMOUNT_OF_SCROLLS:
         body = driver.find_element_by_xpath('//body')
         body.send_keys(Keys.CONTROL + Keys.END)
-        now = datetime.now()
-        date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
-        print('scroll: ' + str(scroll_nro) + ' ' + date_time)
         scroll_nro = scroll_nro + 1
-        sleep(5)
+        sleep(3)
     sleep(5)
     body = driver.find_element_by_xpath('//body')
     posts = body.find_elements_by_class_name('sjgh65i0')
     posts_links_html = []
-    len_posts = len(posts)
-    for i, post in enumerate(posts):
-        print(f"POST {i+1} de {len_posts}", "*"*30)
+    for post in posts:
         specific_span_tags = post.find_elements_by_xpath("//span[contains(@id, 'jsc_c')]")
-        len_spec_span_tags = len(specific_span_tags)
-        for j, sst in enumerate(specific_span_tags):
-            # print(f"SPAN {j+1} de {len_spec_span_tags}", "-"*30)
-
+        for sst in specific_span_tags:
             if len(posts_links_html) >= amount_of_publications:
                 break
-
             if "·" in sst.text:
                 a_tags = sst.find_elements_by_tag_name("a")
-                len_a_tags = len(a_tags)
-                for k, a_tag in enumerate(a_tags):
-
+                for a_tag in a_tags:
                     if len(posts_links_html) >= amount_of_publications:
                         break
-
-                    # print(f"SPAN {k+1} de {len_a_tags}", "."*30)
                     if a_tag.get_attribute("role")=="link":
                         # sometimes the obtained href value obtained might not be the specific link to the FB pub
                         # in those case, it'll change to the correct link once a click is executed over it
                         if "search" in a_tag.get_attribute("href"):
-
-                            print("\n", a_tag.get_attribute("href"))
                             sleep(1)
-                            #print("ABOUT TO BE CLICKED")
                             a_tag.click()
-                            print("CLICKED")
-                            print(a_tag.get_attribute("href"))
-
                         href = a_tag.get_attribute("href")
-                        print(a_tag.get_attribute("aria-label"))
                         inner_html = post.get_attribute("innerHTML")
-                        if href not  in [el[0] for el in posts_links_html]:
+                        if href not  in [post_data[0] for post_data in posts_links_html]:
+                            # avoid duplicates
+                            print(colored(f"Post obtained: {href}", "green"))
                             posts_links_html.append((href, inner_html))
+    print(colored(f"Posts to scrap: {len([post_data[0] for post_data in posts_links_html])}", "green"))
     return posts_links_html
 
 
@@ -183,11 +167,8 @@ def exportNetvizzCsv(config, posts_links):
     posts_fb = OuputDataSetCSV(config.output_filename, columns)
 
     fb_login = getFBLogin(config.fb_username, config.fb_password, config.gecko_binary, config.gecko_driver_exe, config.gecko_headless)
-    i = 0
     for post_link, html_preview in posts_links:
-        i = i + 1
-        print("Post " + str(i))
-        print("URL: " + post_link)
+        print(colored(f"Parsing post with url {post_link}", "green"))
         try:
             post = PostFacebook.PostFacebook(post_link, fb_login, html_preview)
             post.SaveHtml(config.base_path)
@@ -198,7 +179,7 @@ def exportNetvizzCsv(config, posts_links):
             print("ERROR" + str(ex) + traceback.format_exc()) 
     
     fb_login.quit()
-    print('END Post')
+    print(colored("Done!", "green"))
     posts_fb.save()
 
 
@@ -222,6 +203,6 @@ for url, html in posts_links:
         posts_links_to_scrap.append((url, html))
 
 exportLinksCsv(config, posts_links_to_scrap)
-print('Post Count: ', len(posts_links_to_scrap))
 driver.quit()
+
 exportNetvizzCsv(config, posts_links_to_scrap)

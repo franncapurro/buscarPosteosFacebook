@@ -29,6 +29,7 @@ from PIL import Image
 from selenium.common.exceptions import (ElementClickInterceptedException,
                                         ElementNotInteractableException)
 from selenium.webdriver.common.keys import Keys
+from termcolor import colored
 
 from FacebookStringToNumber import FacebookStringToNumber
 from TextOutputFile import TextOutputFile
@@ -60,7 +61,7 @@ class PostFacebook():
             post = self.fb_login.find_element_by_css_selector('.du4w35lb.l9j0dhe7')
             html = post.get_attribute("innerHTML")
         except Exception as ex:
-            print("ERROR" + str(ex))
+            print(colored("ERROR" + str(ex), 'red'))
         return html
 
     def _getHtmlPost(self, html_raw):
@@ -83,7 +84,7 @@ class PostFacebook():
 
         page_name = self.getPageName()
         if page_name is None:
-            print('post skip')
+            print(colored('ERROR: page name could not be obtained', 'red'))
             return posts
 
         posts.append('')  # type
@@ -228,52 +229,53 @@ class PostFacebook():
         posts.append(tiene_menciones)
         return posts
 
-    #Para Posteos en el dia hay que cambiarlo.
-    #viene en formato 24 min o 1 h
     def getPostDate(self):
+        """
+        The date may be shown in any of the following ways:
+        3 de diciembre de 2021
+        14 de diciembre de 2021 a las 15:30
+        2 días
+        1 min
+        8 h
+        Hace un momento
+        """
         locale.setlocale(locale.LC_TIME, 'es_AR')
         a_date = self.html_bs.find_all('a', {'class': 'oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gmql0nx0 gpro0wi8 b1v8xokw'})
         if a_date:
             a_date_text = a_date[0].get("aria-label")
             tokens = a_date_text.split(' ')
-            """
-            Hace un momento
-            1 min
-            8 h
-            14 de diciembre de 2021 a las 15:30
-            """
             if len(tokens)== 2 and "h" in tokens:
+                # 8 h
                 a_date_text = a_date_text.replace(' ', '')
                 a_date_text = a_date_text.replace('h', '')
                 hours = -1*int(a_date_text)
                 post_date = datetime.now() + timedelta(hours=hours)
             elif len(tokens)== 2 and 'min' in tokens:
+                # 1 min
                 a_date_text = a_date_text.replace(' ', '')
                 a_date_text = a_date_text.replace('min', '')
                 minutes = -1*int(a_date_text)
                 post_date = datetime.now() + timedelta(minutes=minutes)
             elif len(tokens)== 2 and 'd' in a_date_text:
-                a_date_text = a_date_text.replace(' ', '')
-                a_date_text = a_date_text.replace('d', '')
+                # 2 días
+                a_date_text = a_date_text.replace(' ', '').replace('d', '')
                 days = -1*int(a_date_text)
                 post_date = datetime.now() + timedelta(hours=24*days)
             elif len(tokens)== 8 and "las" in tokens:
-                day = tokens[0]
-                month = tokens[2]
-                year = tokens[4]
+                # 14 de diciembre de 2021 a las 15:30
+                day, month, year = tokens[0], tokens[2], tokens[4]
                 text_in_new_format = f"{day} {month} {year}"
                 post_date = datetime.strptime(text_in_new_format, '%d %B %Y')+ timedelta(hours=3)
             elif len(tokens)== 2 and 'momento' in tokens:
+                # Hace un momento
                 post_date = datetime.now()
             elif len(tokens)==5 and "de" in [tokens[1], tokens[3]]:
-                # "3 de diciembre de 2021"
-                day = tokens[0]
-                month = tokens[2]
-                year = tokens[4]
+                # 3 de diciembre de 2021
+                day, month, year = tokens[0], tokens[2], tokens[4]
                 text_in_new_format = f"{day} {month} {year}"
                 post_date = datetime.strptime(text_in_new_format, '%d %B %Y')+ timedelta(hours=3)
             else:
-                print("ERROR: getPostDate")
+                print(colored("ERROR: publication date could not be parsed", "red"))
                 return ("", float(0), None, None)    
             
             post_published_unix = datetime.timestamp(post_date)
@@ -365,8 +367,9 @@ class PostFacebook():
         return mencionesLista, hashtagsLista
 
     def getTituloLink(self):
+        CLASS_NAME = "a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7 ojkyduve"
         text_wanted = ""
-        span_tags = self.html_bs.find_all('span', {'class': 'a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7 ojkyduve'})
+        span_tags = self.html_bs.find_all('span', {'class': CLASS_NAME})
         index_minus_one = 0
         for i, span_tag in enumerate(span_tags):
             span_text_inside = span_tag.getText()
@@ -414,10 +417,13 @@ class PostFacebook():
         return "https://www.facebook.com/" + page_id + "/posts/" + post_id + "/"
 
     def getPostID(self):
-        page_id = self.urlLink.replace('https://www.facebook.com/', '')
-        page_id_split = page_id.split('/')
-        page_id = page_id_split[0]
-        post_id = page_id_split[2].split("?__cft__")[0]
+        tokens = self.urlLink.replace('https://www.facebook.com/', '').split('/')
+        page_id, post_id = ("", "")
+        try:
+            page_id = tokens[0]
+            post_id = tokens[2]
+        except IndexError:
+            print(colored(f"ERROR: Page ID and post ID could not be obtainged for {self.urlLink}", "red"))
         return post_id, page_id
 
     def getPicture(self):
@@ -464,12 +470,13 @@ class PostFacebook():
                 for i_d in intern_divs:
                     intern_intern_divs = i_d.find_all('div')
                     for i_i_d in intern_intern_divs:
+                        # This allows to extract the text in the post
+                        # taking into account the separation of paragraphs
                         intern_text = i_i_d.getText()
                         post_message = post_message + intern_text + "\n"
         except IndexError:
             pass
 
-        # Example of output: "NO LO PODÍAN CREER"
         return post_message
 
     def click_to_see_all_reactions(self):
@@ -486,7 +493,7 @@ class PostFacebook():
                     return True
                 except ElementClickInterceptedException:
                     continue
-        print(f"ERROR: no se encontró el botón {TEXT_DISPLAYED}")
+        print(colored(f"ERROR: button {TEXT_DISPLAYED} not found", 'red'))
         return False
         
 
@@ -530,7 +537,7 @@ class PostFacebook():
                     sleep(0.25)
                     return True
                 except ElementNotInteractableException:
-                    # The element is not clickable, if the whole for cycle finishes
+                    # The element is not clickable, if the whole FOR cycle finishes
                     # that means the button 'Más' was not present
                     continue
         return False
