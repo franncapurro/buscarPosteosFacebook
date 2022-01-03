@@ -32,3 +32,6 @@ class OuputDataSetCSV(object):
     def save(self):
         df = pd.DataFrame(data=self.dataset, columns=self.columns)
         df.to_csv(self.outputFileName, index=False, columns=self.columns, sep=';', quoting=csv.QUOTE_ALL, doublequote=True, quotechar='"', encoding="utf-8")    
+        excel_filename = self.outputFileName.replace(".csv", "") + ".xlsx"
+        print(excel_filename)
+        df.to_excel(excel_filename, index=False, columns=self.columns)
