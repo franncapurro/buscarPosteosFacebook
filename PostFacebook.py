@@ -27,7 +27,7 @@ from FacebookStringToNumber import FacebookStringToNumber
 from TextOutputFile import TextOutputFile
 from selenium.webdriver.common.keys import Keys
 from urllib.request import urlretrieve
-
+from selenium.common.exceptions import ElementNotInteractableException
 from PIL import Image
 
 
@@ -482,12 +482,15 @@ class PostFacebook():
         TEXT_DISPLAYED = 'Más'
         potential_blocks = self.fb_login.find_elements_by_xpath(F"//div[@class='{CLASS_NAME}']")
         for pb in potential_blocks:
-            inner_divs = pb.find_elements_by_xpath("//div[@aria-hidden='false']")
-            for in_d in inner_divs:
-                if TEXT_DISPLAYED in in_d.text:
+            if TEXT_DISPLAYED in pb.text:
+                try:
                     pb.click()
                     sleep(0.25)
                     return True
+                except ElementNotInteractableException:
+                    # The element is not clickable, if the whole for cycle finishes
+                    # that means the button 'Más' was not present
+                    continue
         return False
     
     def get_divs_for_additional_reactions(self):
