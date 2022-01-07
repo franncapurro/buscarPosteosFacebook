@@ -94,13 +94,16 @@ class PostFacebook():
         post_id, page_id = self.getPostID()
         posts.append(page_id)
         posts.append(post_id)
-        posts.append(self.getPostURL(page_id, post_id))
+        post_url = self.getPostURL(page_id, post_id)
+        posts.append(post_url)
 
         # post_message
-        posts.append(self.getPostMessage())
+        post_message = self.getPostMessage()
+        posts.append(post_message)
 
         # picture
-        posts.append(self.getPicture())
+        picture = self.getPicture()
+        posts.append(picture)
 
         # full_picture
         full_picture, post_picture_descripcion = self.getFullPicture()
@@ -187,7 +190,8 @@ class PostFacebook():
 
         # engagement_fb
         try:
-            posts.append(comments_count + reactions_count + shares_count)
+            engagement_fb = comments_count + reactions_count + shares_count
+            posts.append(engagement_fb)
         except Exception:
             posts.append('')
 
@@ -295,26 +299,12 @@ class PostFacebook():
         return link
 
     def getPageName(self):
+        CLASS_NAME = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gpro0wi8 oo9gr5id lrazzd5p"
         # Find a tags satisfying some condition
-        class_in_a_tags = []
-        a_tags = self.html_bs.find_all('a')
-        for a_tag in a_tags:
-            class_attr = a_tag.get("class")
-            if "oajrlxb2" in class_attr:
-                class_in_a_tags.append(a_tag)
-        # Find a specific a tag
-        index_one_less = 0
-        for index, elem in enumerate(class_in_a_tags):
-            text = elem.getText()
-            if "Información" in text:
-                index_one_less = index
-                break
-        index_wanted = index_one_less + 1
-        a_tag_wanted = class_in_a_tags[index_wanted]
-        text_wanted = None
-        if a_tag_wanted:
-            text_wanted = a_tag_wanted.getText()
-        return text_wanted
+        a_tags = self.fb_login.find_elements_by_xpath(f"//a[@class='{CLASS_NAME}']")
+        a_tag_wanted = a_tags[0]
+        text = a_tag_wanted.text
+        return text
 
     def getTieneHashtags(self, hashtagsLista):
         tiene_hashtags = False
@@ -414,7 +404,7 @@ class PostFacebook():
         return comments_count
 
     def getPostURL(self, page_id, post_id):
-        return "https://www.facebook.com/" + page_id + "/posts/" + post_id + "/"
+        return self.urlLink
 
     def getPostID(self):
         tokens = self.urlLink.replace('https://www.facebook.com/', '').split('/')
@@ -422,6 +412,12 @@ class PostFacebook():
         try:
             page_id = tokens[0]
             post_id = tokens[2]
+            try:
+                # this is for the case in which the post is a collection of images
+                image_id = int(tokens[3])
+                post_id = post_id + f"/{image_id}"
+            except (ValueError, IndexError):
+                pass
         except IndexError:
             print(colored(f"ERROR: Page ID and post ID could not be obtainged for {self.urlLink}", "red"))
         return post_id, page_id

@@ -248,8 +248,8 @@ for i in range(dataset_csv.init, dataset_csv.end):
     post_url = posts[i][1]
     shares_count_fb = posts[i][2]
     scroll_count = 1 + shares_count_fb / config.shares_per_page
-    if scroll_count > config.max_scroll:
-        scroll_count = config.max_scroll
+    if scroll_count > config.amount_posts:
+        scroll_count = config.amount_posts
     print("Shared Count:" + str(shares_count_fb))
     print("Max Scroll:" + str(scroll_count))
 
