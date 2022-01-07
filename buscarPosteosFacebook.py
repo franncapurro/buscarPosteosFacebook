@@ -192,7 +192,7 @@ posts_links = []
 try:
     fb_search = getFBSearchPage(driver, config.fb_page_name,
                                 config.fb_search_year)
-    posts_links = getFBPostsLinks(fb_search, config.max_scroll)
+    posts_links = getFBPostsLinks(fb_search, config.amount_posts)
 except Exception as ex:
     print("ERROR" + str(ex))
 
