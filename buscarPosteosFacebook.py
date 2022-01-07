@@ -55,6 +55,7 @@ def getFBPage(url, gecko_binary, gecko_driver_exe, headless=False):
 
 
 def getFBSearchPage(driver, page, year):
+    sleep(2)
     search_textbox = driver.find_element_by_css_selector("input[type='search'][aria-label]")
     search_textbox.send_keys(page.encode("utf_8").decode("utf_8"))
     search_textbox.send_keys(Keys.ENTER)
@@ -163,7 +164,44 @@ def exportLinksCsv(config, posts_links):
 
 
 def exportNetvizzCsv(config, posts_links):
-    columns = ['type', 'medio', 'by', 'post_id', 'post_link', 'post_message', 'picture', 'full_picture', 'link', 'link_domain', 'post_published', 'post_published_unix', 'post_published_sql', 'post_hora_argentina', 'like_count_fb', 'comments_count_fb', 'reactions_count_fb', 'shares_count_fb', 'engagement_fb', 'rea_LIKE', 'rea_LOVE', 'rea_WOW', 'rea_HAHA', 'rea_SAD', 'rea_ANGRY', 'post_picture_descripcion', 'poll_count', 'titulo_link', 'subtitulo_link', 'menciones', 'hashtags', 'video_plays_count', 'fb_action_tags_text', 'has_emoji', 'tiene_hashtags', 'tiene_menciones']
+    columns = [
+        'type',
+        'medio',
+        'by',
+        'post_id',
+        'post_link',
+        'post_message',
+        # 'picture',
+        # 'full_picture',
+        'link',
+        # 'link_domain',
+        'post_published',
+        # 'post_published_unix',
+        # 'post_published_sql',
+        # 'post_hora_argentina',
+        'like_count_fb',
+        'comments_count_fb',
+        'reactions_count_fb',
+        'shares_count_fb',
+        # 'engagement_fb',
+        'rea_LIKE',
+        'rea_LOVE',
+        'rea_WOW',
+        'rea_HAHA',
+        'rea_SAD',
+        'rea_ANGRY',
+        # 'post_picture_descripcion',
+        # 'poll_count',
+        # 'titulo_link',
+        #'subtitulo_link',
+        # 'menciones',
+        # 'hashtags',
+        # 'video_plays_count',
+        # 'fb_action_tags_text',
+        # 'has_emoji',
+        # 'tiene_hashtags',
+        # 'tiene_menciones'
+    ]
     posts_fb = OuputDataSetCSV(config.output_filename, columns)
 
     fb_login = getFBLogin(config.fb_username, config.fb_password, config.gecko_binary, config.gecko_driver_exe, config.gecko_headless)

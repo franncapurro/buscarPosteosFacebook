@@ -86,28 +86,31 @@ class PostFacebook():
         if page_name is None:
             print(colored('ERROR: page name could not be obtained', 'red'))
             return posts
-
-        posts.append('')  # type
-
+        # type
+        posts.append('')
+        # medio
         posts.append(page_name)
 
         post_id, page_id = self.getPostID()
+        # by
         posts.append(page_id)
+        # post_id
         posts.append(post_id)
         post_url = self.getPostURL(page_id, post_id)
+        # post_link
         posts.append(post_url)
 
-        # post_message
         post_message = self.getPostMessage()
+        # post_message
         posts.append(post_message)
 
-        # picture
-        picture = self.getPicture()
-        posts.append(picture)
+        # # picture
+        # picture = self.getPicture()
+        # posts.append(picture)
 
-        # full_picture
-        full_picture, post_picture_descripcion = self.getFullPicture()
-        posts.append(full_picture)
+        # # full_picture
+        # full_picture, post_picture_descripcion = self.getFullPicture()
+        # posts.append(full_picture)
 
         link = ''
         link_domain = ''
@@ -161,76 +164,94 @@ class PostFacebook():
                                         poll_count_text = poll_tag[0].getText().replace('votos', '')
                                         poll_count = self.fbStringToNumber.convertStringToNumber(poll_count_text)                    
                                     break
-
+        # link
         posts.append(link)
-        posts.append(link_domain)
+        # posts.append(link_domain)
 
         # post_published
         post_published_str, post_published_unix, post_published_sql, post_date_argentina = self.getPostDate()
+        # post_published
         posts.append(post_published_str) 
-        posts.append(post_published_unix)
-        posts.append(post_published_sql)
-        posts.append(post_date_argentina)
+        # # post_published_unix
+        # posts.append(post_published_unix)
+        # # post_published_sql
+        # posts.append(post_published_sql)
+        # # post_hora_argentina
+        # posts.append(post_date_argentina)
 
         like_count_fb, rea_LOVE, rea_WOW, rea_HAHA, rea_SAD, rea_ANGRY = self.getReactions(self.fbStringToNumber)
-
+        # like_count_fb
         posts.append(like_count_fb)
 
         # comments_count_fb
         comments_count = self.getCommentsCount(self.fbStringToNumber)
+        # comments_count_fb
         posts.append(comments_count)
 
-        # reactions_count_fb
         reactions_count = self.getReactionsCount(self.fbStringToNumber)
+        # reactions_count_fb
         posts.append(reactions_count)
 
-        # shares_count_fb
+        
         shares_count = self.getSharesCount(self.fbStringToNumber)
+        # shares_count_fb
         posts.append(shares_count)
 
-        # engagement_fb
-        try:
-            engagement_fb = comments_count + reactions_count + shares_count
-            posts.append(engagement_fb)
-        except Exception:
-            posts.append('')
+        # try:
+        #     engagement_fb = comments_count + reactions_count + shares_count
+        #   # engagement_fb
+        #     posts.append(engagement_fb)
+        # except Exception:
+        #     posts.append('')
 
+        # rea_LIKE
         posts.append(like_count_fb)
+        # rea_LOVE
         posts.append(rea_LOVE)
+        # rea_WOW
         posts.append(rea_WOW)
+        # rea_HAHA
         posts.append(rea_HAHA)
+        # rea_SAD
         posts.append(rea_SAD)
+        # rea_ANGRY
         posts.append(rea_ANGRY)
 
-        posts.append(post_picture_descripcion)
-        posts.append(poll_count)
+        # posts.append(post_picture_descripcion)
+        # posts.append(poll_count)
 
-        titulo = self.getTituloLink()
-        subtitulo_post = "" #no existe mas este dato
+        # titulo = self.getTituloLink()
+        # subtitulo_post = "" #no existe mas este dato
+        # # titulo_link
+        # posts.append(titulo)
+        # # subtitulo_link
+        # posts.append(subtitulo_post)
 
-        posts.append(titulo)
-        posts.append(subtitulo_post)
+        # mencionesLista, hashtagsLista = self.getMencionesHashtags()
+        # # menciones
+        # posts.append(mencionesLista)
+        # # hashtags
+        # posts.append(hashtagsLista)
 
-        mencionesLista, hashtagsLista = self.getMencionesHashtags()
-        posts.append(mencionesLista)
-        posts.append(hashtagsLista)
+        # video_plays_count = self.getVideosPlaysCount(self.fbStringToNumber)
+        # # video_plays_count
+        # posts.append(video_plays_count)
 
-        video_plays_count = self.getVideosPlaysCount(self.fbStringToNumber)
-        posts.append(video_plays_count)
+        # fb_action_tags_text = self.getFBActionTagsText()
+        # # fb_action_tags_text
+        # posts.append(fb_action_tags_text)
 
-        fb_action_tags_text = self.getFBActionTagsText()
-        posts.append(fb_action_tags_text)
+        # has_emoji = self.getHasEmoji()
+        # # has_emoji
+        # posts.append(has_emoji)
 
-        has_emoji = self.getHasEmoji()
-        posts.append(has_emoji)
+        # tiene_hashtags = self.getTieneHashtags(hashtagsLista)
+        # # tiene_hashtags
+        # posts.append(tiene_hashtags)
 
-        tiene_hashtags = self.getTieneHashtags(hashtagsLista)
-
-        posts.append(tiene_hashtags)
-
-        tiene_menciones = self.getTieneHashtags(mencionesLista)
-
-        posts.append(tiene_menciones)
+        # tiene_menciones = self.getTieneHashtags(mencionesLista)
+        # # tiene_menciones
+        # posts.append(tiene_menciones)
         return posts
 
     def getPostDate(self):
