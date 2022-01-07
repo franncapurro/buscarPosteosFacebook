@@ -404,7 +404,7 @@ class PostFacebook():
         return comments_count
 
     def getPostURL(self, page_id, post_id):
-        return "https://www.facebook.com/" + page_id + "/posts/" + post_id + "/"
+        return self.urlLink
 
     def getPostID(self):
         tokens = self.urlLink.replace('https://www.facebook.com/', '').split('/')
