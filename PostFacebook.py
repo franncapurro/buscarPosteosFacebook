@@ -412,6 +412,12 @@ class PostFacebook():
         try:
             page_id = tokens[0]
             post_id = tokens[2]
+            try:
+                # this is for the case in which the post is a collection of images
+                image_id = int(tokens[3])
+                post_id = post_id + f"/{image_id}"
+            except (ValueError, IndexError):
+                pass
         except IndexError:
             print(colored(f"ERROR: Page ID and post ID could not be obtainged for {self.urlLink}", "red"))
         return post_id, page_id
