@@ -5,6 +5,7 @@ from time import sleep
 import traceback
 
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.firefox.options import Options
@@ -19,12 +20,12 @@ from OutputDataSetCSV import OuputDataSetCSV
 
 def getFBLogin(fb_user, fb_password, gecko_binary, gecko_driver_exe, headless=False):
     driver = getFBPage('https://www.facebook.com/login/', gecko_binary, gecko_driver_exe, headless)
-    body = driver.find_element_by_xpath('//body')
+    body = driver.find_element(By.XPATH, '//body')
     body.send_keys(fb_user)
     body.send_keys(Keys.TAB)
     body.send_keys(fb_password)
     body.send_keys(Keys.TAB)
-    loginbutton = driver.find_element_by_css_selector("button[name='login']")
+    loginbutton = driver.find_element(By.CSS_SELECTOR, "button[name='login']")
     loginbutton.send_keys(Keys.ENTER)
     print(colored('Logged into Facebook', 'green'))
     sleep(15)
@@ -55,7 +56,7 @@ def getFBPage(url, gecko_binary, gecko_driver_exe, headless=False):
 
 
 def getFBSearchPage(driver, page, year):
-    search_textbox = driver.find_element_by_css_selector("input[type='search'][aria-label]")
+    search_textbox = driver.find_element(By.CSS_SELECTOR, "input[type='search'][aria-label]")
     search_textbox.send_keys(page.encode("utf_8").decode("utf_8"))
     search_textbox.send_keys(Keys.ENTER)
     sleep(15)
@@ -98,7 +99,7 @@ def getFBSearchPage(driver, page, year):
     elem = driver.switch_to.active_element
     elem.send_keys(Keys.ARROW_DOWN)
 
-    search_textbox = driver.find_elements_by_css_selector("li.k4urcfbm[role='option']")
+    search_textbox = driver.find_elements(By.CSS_SELECTOR, "li.k4urcfbm[role='option']")
     for elem in search_textbox:
         if elem.text.upper() == page.upper():
             elem.click()
@@ -111,21 +112,21 @@ def getFBPostsLinks(driver, amount_of_publications):
     AMOUNT_OF_SCROLLS = 5
     scroll_nro = 0
     while HasScroll(driver) and scroll_nro < AMOUNT_OF_SCROLLS:
-        body = driver.find_element_by_xpath('//body')
+        body = driver.find_element(By.XPATH, '//body')
         body.send_keys(Keys.CONTROL + Keys.END)
         scroll_nro = scroll_nro + 1
         sleep(3)
     sleep(5)
-    body = driver.find_element_by_xpath('//body')
-    posts = body.find_elements_by_class_name('sjgh65i0')
+    body = driver.find_element(By.XPATH, '//body')
+    posts = body.find_elements(By.CLASS_NAME, 'sjgh65i0')
     posts_links_html = []
     for post in posts:
-        specific_span_tags = post.find_elements_by_xpath("//span[contains(@id, 'jsc_c')]")
+        specific_span_tags = post.find_elements(By.XPATH, "//span[contains(@id, 'jsc_c')]")
         for sst in specific_span_tags:
             if len(posts_links_html) >= amount_of_publications:
                 break
             if "·" in sst.text:
-                a_tags = sst.find_elements_by_tag_name("a")
+                a_tags = sst.find_elements(By.TAG_NAME, "a")
                 for a_tag in a_tags:
                     if len(posts_links_html) >= amount_of_publications:
                         break
@@ -146,7 +147,7 @@ def getFBPostsLinks(driver, amount_of_publications):
 
 
 def HasScroll(driver):
-    return driver.find_element_by_tag_name('div')
+    return driver.find_element(By.TAG_NAME, 'div')
 
 
 def exportLinksCsv(config, posts_links):

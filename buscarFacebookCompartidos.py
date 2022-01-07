@@ -32,13 +32,13 @@ def getFacebookLogin(fb_user, fb_password):
     print("Opened facebook...")
     wait = WebDriverWait(driver, 12)
     wait.until(EC.visibility_of_element_located((By.ID, "email")))
-    a = driver.find_element_by_id('email')
+    a = driver.find_element(By.ID, 'email')
     a.send_keys(fb_user)
     print("Email Id entered...")
-    b = driver.find_element_by_id('pass')
+    b = driver.find_element(By.ID, 'pass')
     b.send_keys(fb_password)
     print("Password entered...")
-    c = driver.find_element_by_id('loginbutton')
+    c = driver.find_element(By.ID, 'loginbutton')
     c.click()
     print("Facebook login...")
     return driver
@@ -59,20 +59,20 @@ def getFacebookHtml(driver, target_page, scroll_count, fb_avcode):
 
     scroll_nro = 0
     while HasScroll(driver) and scroll_nro < scroll_count:
-        driver.find_element_by_xpath('//body').send_keys(Keys.CONTROL + Keys.END)
+        driver.find_element(By.XPATH, '//body').send_keys(Keys.CONTROL + Keys.END)
         now = datetime.now() # current date and time
         date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
         print('scroll: ' + str(scroll_nro) + ' ' + date_time)
         scroll_nro = scroll_nro + 1
         sleep(5)
 
-    html_body_elem = driver.find_element_by_id('repost_view_permalink')
+    html_body_elem = driver.find_element(By.ID, 'repost_view_permalink')
     html_body = html_body_elem.get_attribute("innerHTML")
     return TextOutputFile(html_body)
 
 
 def HasScroll(driver):
-    link = driver.find_elements_by_css_selector('.uiMorePagerPrimary')
+    link = driver.find_elements(By.CSS_SELECTOR, '.uiMorePagerPrimary')
     return len(link) > 0
 
 

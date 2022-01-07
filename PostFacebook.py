@@ -28,6 +28,7 @@ import bs4
 from PIL import Image
 from selenium.common.exceptions import (ElementClickInterceptedException,
                                         ElementNotInteractableException)
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from termcolor import colored
 
@@ -53,12 +54,12 @@ class PostFacebook():
         self.fb_login.get(url)
         sleep(5)
         
-        body = self.fb_login.find_element_by_xpath('//body')
+        body = self.fb_login.find_element(By.XPATH, '//body')
         body.send_keys(Keys.ESCAPE)
         sleep(1)
 
         try:
-            post = self.fb_login.find_element_by_css_selector('.du4w35lb.l9j0dhe7')
+            post = self.fb_login.find_element(By.CSS_SELECTOR, '.du4w35lb.l9j0dhe7')
             html = post.get_attribute("innerHTML")
         except Exception as ex:
             print(colored("ERROR" + str(ex), 'red'))
@@ -301,7 +302,7 @@ class PostFacebook():
     def getPageName(self):
         CLASS_NAME = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gpro0wi8 oo9gr5id lrazzd5p"
         # Find a tags satisfying some condition
-        a_tags = self.fb_login.find_elements_by_xpath(f"//a[@class='{CLASS_NAME}']")
+        a_tags = self.fb_login.find_elements(By.XPATH, f"//a[@class='{CLASS_NAME}']")
         a_tag_wanted = a_tags[0]
         text = a_tag_wanted.text
         return text
@@ -482,7 +483,7 @@ class PostFacebook():
         Constant TEXT_DISPLAYED may need to be changed regularly.
         """
         TEXT_DISPLAYED = 'Consulta quién reaccionó a esto'
-        for ps in self.fb_login.find_elements_by_tag_name("span"):
+        for ps in self.fb_login.find_elements(By.TAG_NAME, "span"):
             if ps.get_attribute("aria-label") == TEXT_DISPLAYED:
                 try:
                     ps.click()
@@ -505,7 +506,7 @@ class PostFacebook():
         """
         CLASS_NAME = "bp9cbjyn rq0escxv j83agx80 pfnyh3mw l9j0dhe7 cehpxlet aodizinl hv4rvrfc ofv0k9yr dati1w0a"
         main_reactions_divs = []
-        candidates_divs = self.fb_login.find_elements_by_xpath(f"//div[@class='{CLASS_NAME}']")
+        candidates_divs = self.fb_login.find_elements(By.XPATH, f"//div[@class='{CLASS_NAME}']")
         for candidate in candidates_divs:
             # next let's verify its text is a number
             # so we know it's a main reaction div
@@ -525,7 +526,7 @@ class PostFacebook():
         """
         CLASS_NAME = "q9uorilb l9j0dhe7 j1lvzwm4 ae0w7mvl r9glsfau gbic8f20 tgvbjcpo ni8dbmo4 stjgntxs"
         TEXT_DISPLAYED = 'Más'
-        potential_blocks = self.fb_login.find_elements_by_xpath(F"//div[@class='{CLASS_NAME}']")
+        potential_blocks = self.fb_login.find_elements(By.XPATH, f"//div[@class='{CLASS_NAME}']")
         for pb in potential_blocks:
             if TEXT_DISPLAYED in pb.text:
                 try:
@@ -547,7 +548,7 @@ class PostFacebook():
         Return a list of divs containing data about additional reactions.
         """
         add_reactions = []
-        candidate_divs = self.fb_login.find_elements_by_xpath("//div[@role='menuitemradio']")
+        candidate_divs = self.fb_login.find_elements(By.XPATH, "//div[@role='menuitemradio']")
         for candidate in candidate_divs:
             try:
             # next let's verify its text is a number
@@ -580,7 +581,7 @@ class PostFacebook():
             "cares": 0,
         }
         for div_w_img in divs_with_image:
-            img_tags = div_w_img.find_elements_by_tag_name("img")
+            img_tags = div_w_img.find_elements(By.TAG_NAME, "img")
             img_src = img_tags[0].get_attribute("src")
             # download image into a file
             urlretrieve(img_src, 'img_to_be_compared.png')
