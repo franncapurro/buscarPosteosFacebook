@@ -35,7 +35,7 @@ class ConfigManager():
         self.input_filename = None
         self.output_filename = None
         self.output_post_filename_prefix = None
-        self.max_scroll = None
+        self.amount_posts = None
         self.shares_per_page = None
         self.gecko_binary = None
         self.gecko_driver_exe = None
@@ -50,7 +50,7 @@ class ConfigManager():
             self.fb_username = fbSection['user']
             self.fb_password = fbSection['password']
             self.fb_avcode = fbSection['avcode']
-            self.max_scroll = fbSection['max_scroll']
+            self.amount_posts = fbSection['amount_posts']
             self.fb_page_name = fbSection['page_name']
             self.fb_search_year = int(fbSection['search_year'])
             self.fb_search_month = int(fbSection['search_month'])

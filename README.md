@@ -22,7 +22,6 @@ Las opciones que se pueden configurar son:
 - gecko_binary: Ruta al archivo exe del navegador Firefox.
 - gecko_driver_exe: Ruta al archivo del archivo exe del driver de selenium. Viene incluido en el paquete de la herramienta y no debería cambiarse.
 - user y password: Usuario y Contraseña de Facebook para el login.
-- max_scroll: Cantidad máxima de scroll por página de búsqueda.
 - page_name: Nombre de la página de Facebook para buscar posts. 
 - search_year y search_month: Año y mes a buscar. Como Facebook limita la actividad automática lo mejor es buscar un mes y después esperar un rato (20 minutos) y retomar con otro mes.
 
