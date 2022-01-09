@@ -139,6 +139,9 @@ def export_links_csv(
     config: ConfigManager.ConfigManager,
     posts_links: List[Tuple[str, webelement.WebElement]],
 ):
+    """
+    Save a table containing the links to the FB posts.
+    """
     columns = ["post_link"]
     now = datetime.now()
     date_time = now.strftime("%m_%d_%Y_%H_%M_%S")
@@ -201,13 +204,15 @@ def export_netvizz_csv(
         config.gecko_binary,
         config.gecko_headless,
     )
+    temp_filenames = []
     for post_link, html_preview in posts_links:
         print(colored(f"Parsing post with url {post_link}", "green"))
         try:
             post = post_facebook.PostFacebook(post_link, fb_login, html_preview)
-            post.SaveHtml(config.base_path)
+            fn = post.SaveHtml(config.base_path)
             posts = post.ParsePostHTML()
             posts_fb.append(posts)
+            temp_filenames.append(fn)
             sleep(10)
         except Exception as ex:
             print("ERROR" + str(ex) + traceback.format_exc())
@@ -215,6 +220,7 @@ def export_netvizz_csv(
     fb_login.quit()
     print(colored("Done!", "green"))
     posts_fb.save()
+    return temp_filenames
 
 
 # Programa Principal
@@ -237,7 +243,10 @@ for url, html in posts_links:
     if url not in [p_l[0] for p_l in posts_links_to_scrap]:
         posts_links_to_scrap.append((url, html))
 
-export_links_csv(conf, posts_links_to_scrap)
+# export_links_csv(conf, posts_links_to_scrap)
 driver.quit()
 
-export_netvizz_csv(conf, posts_links_to_scrap)
+temp_filenames = export_netvizz_csv(conf, posts_links_to_scrap)
+for temp_fn in temp_filenames:
+    os.remove(temp_fn)
+

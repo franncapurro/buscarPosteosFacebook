@@ -56,7 +56,7 @@ class PostFacebook:
         body = self.fb_login.find_element_by_xpath("//body")
         body.send_keys(Keys.ESCAPE)
         sleep(1)
-
+        html = None
         try:
             post = self.fb_login.find_element_by_css_selector(".du4w35lb.l9j0dhe7")
             html = post.get_attribute("innerHTML")
@@ -78,6 +78,7 @@ class PostFacebook:
         # use a hash to create a unique simpler filename
         hash_object = hashlib.md5(output_filename_html.encode())
         text_output_file.save(f"file_{hash_object.hexdigest()}")
+        return f"file_{hash_object.hexdigest()}"
 
     def ParsePostHTML(self):
         posts = []
@@ -313,10 +314,8 @@ class PostFacebook:
             tokens = a_date_text.split(" ")
             if len(tokens) == 2 and "h" in tokens:
                 # 8 h
-                a_date_text = a_date_text.replace(" ", "")
-                a_date_text = a_date_text.replace("h", "")
-                hours = -1 * int(a_date_text)
-                post_date = datetime.now() + timedelta(hours=hours)
+                hours = int(a_date_text.replace("h", "").strip())
+                post_date = datetime.now() - timedelta(hours=hours)
             elif len(tokens) == 2 and "min" in tokens:
                 # 1 min
                 a_date_text = a_date_text.replace(" ", "")
@@ -710,13 +709,13 @@ class PostFacebook:
         Given a list of divs containing each one data about a type of reaction,
         it returns a dict with key-values "type-of-reaction": "times-reacted".
         """
-        like = Image.open("like.png")
-        love = Image.open("love.png")
-        haha = Image.open("haha.png")
-        wow = Image.open("wow.png")
-        sad = Image.open("sad.png")
-        hate = Image.open("hate.png")
-        care = Image.open("care.png")
+        like = Image.open("./reaction_icons/like.png")
+        love = Image.open("./reaction_icons/love.png")
+        haha = Image.open("./reaction_icons/haha.png")
+        wow = Image.open("./reaction_icons/wow.png")
+        sad = Image.open("./reaction_icons/sad.png")
+        hate = Image.open("./reaction_icons/hate.png")
+        care = Image.open("./reaction_icons/care.png")
         reactions = {
             "likes": 0,
             "loves": 0,
@@ -729,10 +728,11 @@ class PostFacebook:
         for div_w_img in divs_with_image:
             img_tags = div_w_img.find_elements_by_tag_name("img")
             img_src = img_tags[0].get_attribute("src")
+            temp_filename = "img_to_be_compared.png"
             # download image into a file
-            urlretrieve(img_src, "img_to_be_compared.png")
+            urlretrieve(img_src, temp_filename)
             # open the image file
-            img_to_be_compared = Image.open("img_to_be_compared.png")
+            img_to_be_compared = Image.open(temp_filename)
             # compare with the reaction image models
             if list(like.getdata()) == list(img_to_be_compared.getdata()):
                 reactions["likes"] = div_w_img.text
@@ -748,6 +748,7 @@ class PostFacebook:
                 reactions["hates"] = div_w_img.text
             elif list(care.getdata()) == list(img_to_be_compared.getdata()):
                 reactions["cares"] = div_w_img.text
+            os.remove(temp_filename)
         return reactions
 
     def getReactions(self, fbStringToNumber):
