@@ -494,22 +494,27 @@ class PostFacebook:
         return reactions_count
 
     def getCommentsCount(self, fbStringToNumber):
-        comments_count = 0
-        comments_count_a = self.html_bs.find_all(
-            "span",
-            {
-                "class": "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j keod5gw0 nxhoafnm aigsh9s9 fe6kdd0r mau55g9w c8b282yb d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain"
-            },
-        )
-        if len(comments_count_a) > 1:
-            comments_count_a_text = comments_count_a[1].getText()
-            if "compartido" in comments_count_a_text:
-                return comments_count
-            comments_count_text = comments_count_a_text.replace(
-                " comentarios", ""
-            ).replace(" comentario", "")
-            comments_count = fbStringToNumber.convertStringToNumber(comments_count_text)
-        return comments_count
+        COMMENTS_SPAN_IN_LINK = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain"
+        COMMENTS_SPAN_IN_VIDEO = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d9wwppkn mdeji52x e9vueds3 j5wam9gi b1v8xokw m9osqain"
+        pot_span_comments_link = self.html_bs.find_all("span", {"class": COMMENTS_SPAN_IN_LINK},)
+        pot_span_comments_video = self.html_bs.find_all("span", {"class": COMMENTS_SPAN_IN_VIDEO},)
+
+        amount = 0
+        for c_c_a in pot_span_comments_link + pot_span_comments_video:
+            text = c_c_a.getText()
+            if "comentarios" in text:
+                if "mil" in text:
+                    decimal_n = float(text.replace("comentarios", "").replace("mil", "").replace(",", ".").strip())
+                    amount = int(decimal_n*1000)
+                    break
+                amount = int(text.replace("comentarios", "").strip())
+                break
+            elif "comentario" in text:
+                amount = int(text.replace("comentario", "").strip())
+                break
+            else:
+                pass
+        return amount
 
     def getPostURL(self, page_id, post_id):
         return self.urlLink
