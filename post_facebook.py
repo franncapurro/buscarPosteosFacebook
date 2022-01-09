@@ -645,7 +645,12 @@ class PostFacebook:
             # next let's verify its text is a number
             # so we know it's a main reaction div
             try:
-                int(candidate.text)
+                text = candidate.text
+                if "mil" in text:
+                    # 2,3 mil
+                    float(text.replace("mil", "").strip().replace(",", "."))
+                else:
+                    int(text)
                 main_reactions_divs.append(candidate)
             except:
                 pass
@@ -688,10 +693,15 @@ class PostFacebook:
             "//div[@role='menuitemradio']"
         )
         for candidate in candidate_divs:
+            # next let's verify its text is a number
+            # so we know it's a main reaction div
             try:
-                # next let's verify its text is a number
-                # so we know it's an additional reaction div
-                int(candidate.text)
+                text = candidate.text
+                if "mil" in text:
+                    # 2,3 mil
+                    float(text.replace("mil", "").strip().replace(",", "."))
+                else:
+                    int(text)
                 add_reactions.append(candidate)
             except:
                 pass
@@ -726,21 +736,28 @@ class PostFacebook:
             urlretrieve(img_src, temp_filename)
             # open the image file
             img_to_be_compared = Image.open(temp_filename)
+
+            text = div_w_img.text
+            amount = 0
+            if "mil" in text:
+                amount = float(text.replace("mil", "").strip().replace(",", ".")) * 1000
+            else:
+                amount = int(text)
             # compare with the reaction image models
             if list(like.getdata()) == list(img_to_be_compared.getdata()):
-                reactions["likes"] = div_w_img.text
+                reactions["likes"] = amount
             elif list(love.getdata()) == list(img_to_be_compared.getdata()):
-                reactions["loves"] = div_w_img.text
+                reactions["loves"] = amount
             elif list(haha.getdata()) == list(img_to_be_compared.getdata()):
-                reactions["hahas"] = div_w_img.text
+                reactions["hahas"] = amount
             elif list(wow.getdata()) == list(img_to_be_compared.getdata()):
-                reactions["wows"] = div_w_img.text
+                reactions["wows"] = amount
             elif list(sad.getdata()) == list(img_to_be_compared.getdata()):
-                reactions["sads"] = div_w_img.text
+                reactions["sads"] = amount
             elif list(hate.getdata()) == list(img_to_be_compared.getdata()):
-                reactions["hates"] = div_w_img.text
+                reactions["hates"] = amount
             elif list(care.getdata()) == list(img_to_be_compared.getdata()):
-                reactions["cares"] = div_w_img.text
+                reactions["cares"] = amount
             os.remove(temp_filename)
         return reactions
 

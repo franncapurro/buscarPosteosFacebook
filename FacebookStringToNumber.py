@@ -34,7 +34,7 @@ class FacebookStringToNumber():
 
         if 'mil' in text_clean:
             text_clean = text_clean.replace('mil', '')
-            text_clean = text_clean.replace(',', '')
+            text_clean = text_clean.replace(',', '.')
             number = float(text_clean) * 1000
             return int(number)
 
