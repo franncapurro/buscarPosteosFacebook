@@ -318,22 +318,20 @@ class PostFacebook:
                 post_date = datetime.now() - timedelta(hours=hours)
             elif len(tokens) == 2 and "min" in tokens:
                 # 1 min
-                a_date_text = a_date_text.replace(" ", "")
-                a_date_text = a_date_text.replace("min", "")
-                minutes = -1 * int(a_date_text)
-                post_date = datetime.now() + timedelta(minutes=minutes)
+                minutes = int(a_date_text.replace("min", "").strip())
+                post_date = datetime.now() - timedelta(minutes=minutes)
             elif len(tokens) == 2 and "d" in a_date_text:
                 # 2 días
                 a_date_text = a_date_text.replace(" ", "").replace("d", "")
-                days = -1 * int(a_date_text)
-                post_date = datetime.now() + timedelta(hours=24 * days)
+                days = int(a_date_text.replace("d", "").strip())
+                post_date = datetime.now() - timedelta(hours=24 * days)
             elif len(tokens) == 8 and "las" in tokens:
                 # 14 de diciembre de 2021 a las 15:30
                 day, month, year = tokens[0], tokens[2], tokens[4]
                 text_in_new_format = f"{day} {month} {year}"
                 post_date = datetime.strptime(
                     text_in_new_format, "%d %B %Y"
-                ) + timedelta(hours=3)
+                )
             elif len(tokens) == 2 and "momento" in tokens:
                 # Hace un momento
                 post_date = datetime.now()
@@ -343,21 +341,16 @@ class PostFacebook:
                 text_in_new_format = f"{day} {month} {year}"
                 post_date = datetime.strptime(
                     text_in_new_format, "%d %B %Y"
-                ) + timedelta(hours=3)
+                )
             else:
                 print(colored("ERROR: publication date could not be parsed", "red"))
                 return ("", float(0), None, None)
 
-            post_published_unix = datetime.timestamp(post_date)
-            post_date = datetime.utcfromtimestamp(int(post_published_unix))
-
-            post_date_argentina = post_date.strftime("%Y-%m-%d %H:%M:%S")
-            post_published = post_date + timedelta(hours=-3)
-            post_published_sql = post_published.strftime("%Y-%m-%d %H:%M:%S")
-
-            post_published_str = (
-                post_published.replace(microsecond=0).isoformat() + "+0000"
-            )
+            post_published_str = post_date.strftime("%Y-%m-%d %H:%M:%S")
+            post_published_unix = float(0)
+            post_published_sql = None
+            post_date_argentina = None
+            
         return (
             post_published_str,
             post_published_unix,
