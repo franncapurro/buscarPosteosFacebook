@@ -15,7 +15,7 @@ from termcolor import colored
 from webdriver_manager.firefox import GeckoDriverManager
 
 import ConfigManager
-import PostFacebook
+import post_facebook
 from output_data_set_csv import OuputDataSetCSV
 
 
@@ -204,7 +204,7 @@ def export_netvizz_csv(
     for post_link, html_preview in posts_links:
         print(colored(f"Parsing post with url {post_link}", "green"))
         try:
-            post = PostFacebook.PostFacebook(post_link, fb_login, html_preview)
+            post = post_facebook.PostFacebook(post_link, fb_login, html_preview)
             post.SaveHtml(config.base_path)
             posts = post.ParsePostHTML()
             posts_fb.append(posts)
