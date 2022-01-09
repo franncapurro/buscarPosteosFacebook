@@ -478,6 +478,13 @@ class PostFacebook():
         # TODO: this function fails for publication pages that are facebook videos or facebook photos
         # TODO: this function is not capable of extracting emojis
         post_message = ''
+
+        if "watch" in self.urlLink:
+            CLASS_NAME = "a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7 ltmttdrg g0qnabr5 r8blr3vg"
+            span = self.fb_login.find_elements_by_xpath(f"//span[@class='{CLASS_NAME}']")
+            post_message = span.text
+            return post_message
+
         post_message_divs = self.html_bs.find_all('div', {'data-ad-comet-preview': 'message'})
         try:
             main_post = post_message_divs[0]

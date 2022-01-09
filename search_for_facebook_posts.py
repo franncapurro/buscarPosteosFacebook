@@ -16,7 +16,7 @@ from webdriver_manager.firefox import GeckoDriverManager
 
 import ConfigManager
 import PostFacebook
-from OutputDataSetCSV import OuputDataSetCSV
+from output_data_set_csv import OuputDataSetCSV
 
 
 def get_fb_login(

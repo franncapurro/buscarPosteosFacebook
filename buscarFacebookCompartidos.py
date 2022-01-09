@@ -13,9 +13,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 import ConfigManager
-from InputDataSetCSV import InputDataSetCSV
-from OutputDataSetCSV import OuputDataSetCSV
 from FacebookStringToNumber import FacebookStringToNumber
+from InputDataSetCSV import InputDataSetCSV
+from output_data_set_csv import OuputDataSetCSV
 from TextOutputFile import TextOutputFile
 
 
