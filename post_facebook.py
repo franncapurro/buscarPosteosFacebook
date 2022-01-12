@@ -594,6 +594,17 @@ class PostFacebook:
             )
             post_message = span.text
             return post_message
+        
+        if "/photos/" in self.urlLink:
+            CLASS_NAME = (
+                "a8nywdso j7796vcc rz4wbd8a l29c1vbm"
+            )
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{CLASS_NAME}']"
+            )
+            for d in divs:
+                text = d.text
+                return text
 
         post_message_divs = self.html_bs.find_all(
             "div", {"data-ad-comet-preview": "message"}
