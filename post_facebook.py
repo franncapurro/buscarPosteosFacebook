@@ -113,6 +113,10 @@ class PostFacebook:
         # full_picture, post_picture_descripcion = self.getFullPicture()
         # posts.append(full_picture)
 
+        # type
+        if "/photos/" in self.urlLink:
+            posts[0] = "photos"
+
         link = ""
         link_domain = ""
         poll_count = 0
@@ -464,11 +468,14 @@ class PostFacebook:
         return text_wanted
 
     def getSharesCount(self, fbStringToNumber):
+
+        POSTS_SPAN_CLASS = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain"
+
         shares_count = 0
         shares_count_a = self.html_bs.find_all(
             "span",
             {
-                "class": "d2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d9wwppkn fe6kdd0r mau55g9w c8b282yb hrzyx87i jq4qci2q a3bd9o3v b1v8xokw m9osqain"
+                "class": POSTS_SPAN_CLASS
             },
         )
         if shares_count_a:
@@ -491,6 +498,17 @@ class PostFacebook:
             reactions_count = fbStringToNumber.convertStringToNumber(
                 reactions_count_text
             )
+            return reactions_count
+
+        WATCH_SPAN = "ni8dbmo4 stjgntxs ltmttdrg"
+        reactions_count_span = self.html_bs.find_all("span", {"class": WATCH_SPAN})
+        if reactions_count_span:
+            reactions_count_text = reactions_count_span[0].getText()
+            reactions_count = fbStringToNumber.convertStringToNumber(
+                reactions_count_text
+            )
+            return reactions_count
+
         return reactions_count
 
     def getCommentsCount(self, fbStringToNumber):
@@ -517,7 +535,11 @@ class PostFacebook:
         return amount
 
     def getPostURL(self, page_id, post_id):
-        return self.urlLink
+        post_url = self.urlLink
+        if "__cft__" in post_url:
+            tokens_cft = post_url.split("__cft__")
+            post_url = tokens_cft[0].replace("?", "")
+        return post_url
 
     def getPostID(self):
         tokens = self.urlLink.replace("https://www.facebook.com/", "").split("/")
@@ -538,6 +560,9 @@ class PostFacebook:
                     "red",
                 )
             )
+        if "__cft__" in post_id:
+            tokens_cft = post_id.split("__cft__")
+            post_id = tokens_cft[0].replace("?", "")
         return post_id, page_id
 
     def getPicture(self):
