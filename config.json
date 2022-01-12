@@ -20,7 +20,7 @@
       "user": "fb@mail.com",
       "password": "fbpassword",
       "avcode" : "1471326946", 
-      "max_scroll" : 20,
+      "amount_posts" : 20,
       "shares_per_page" : 5,
       "page_name" : "La Nacion",
       "search_year" : "2017",
