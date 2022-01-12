@@ -584,27 +584,37 @@ class PostFacebook:
         # TODO: this function fails for publication pages that are facebook videos or facebook photos
         # TODO: this function is not capable of extracting emojis
         post_message = ""
-
-        if "watch" in self.urlLink:
-            CLASS_NAME = (
-                "a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7 ltmttdrg g0qnabr5 r8blr3vg"
-            )
-            span = self.fb_login.find_elements_by_xpath(
-                f"//span[@class='{CLASS_NAME}']"
-            )
-            post_message = span.text
-            return post_message
         
-        if "/photos/" in self.urlLink:
-            CLASS_NAME = (
-                "a8nywdso j7796vcc rz4wbd8a l29c1vbm"
-            )
-            divs = self.fb_login.find_elements_by_xpath(
-                f"//div[@class='{CLASS_NAME}']"
-            )
-            for d in divs:
-                text = d.text
-                return text
+        PHOTOS_CLASS_NAME = (
+            "a8nywdso j7796vcc rz4wbd8a l29c1vbm"
+        )
+        divs = self.fb_login.find_elements_by_xpath(
+            f"//div[@class='{PHOTOS_CLASS_NAME}']"
+        )
+        for d in divs:
+            text = d.text
+            return text
+
+        # Ver más button
+        VER_MAS_BUTTON_CLASS_NAME = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gpro0wi8 oo9gr5id lrazzd5p"
+        pot_ver_mas_div = self.fb_login.find_elements_by_xpath(
+            f"//div[@class='{VER_MAS_BUTTON_CLASS_NAME}']"
+        )
+        for p_d_ver_mas in pot_ver_mas_div:
+            if p_d_ver_mas.text == "Ver más":
+                p_d_ver_mas.click()
+                break
+
+        # This class name can only be found after clicking on "Ver más"
+        WATCH_CLASS_NAME = (
+            "e5nlhep0 nu4hu5il eg9m0zos"
+        )
+        divs = self.fb_login.find_elements_by_xpath(
+            f"//div[@class='{WATCH_CLASS_NAME}']"
+        )
+        for d in divs:
+            text = d.text
+            return text
 
         post_message_divs = self.html_bs.find_all(
             "div", {"data-ad-comet-preview": "message"}
