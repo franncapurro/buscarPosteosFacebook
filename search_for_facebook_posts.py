@@ -1,11 +1,14 @@
 import os
 import platform
 import traceback
+import sys
 from datetime import datetime
 from time import sleep
 from typing import List, Tuple
 
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.firefox.options import Options
@@ -222,31 +225,109 @@ def export_netvizz_csv(
     posts_fb.save()
     return temp_filenames
 
+def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int):
+    # Assume 3 new posts per scrolldown
+    amount_scrolls = amount_posts // 3 + 1
+    body = driver.find_element_by_xpath("//body")
+    post_links = []
+    for _ in range(0, amount_scrolls):
+        found_links = reveal_post_links(driver, public_page_id)
+        post_links.extend(found_links)
+        body.send_keys(Keys.CONTROL + Keys.END)
+        # Time needed for the new posts to be fully loaded
+        sleep(2)
+    post_links = post_links[:amount_posts]
+    return driver, post_links
 
-# Programa Principal
-conf = ConfigManager.ConfigManager()
+def clean_href(href: str) -> str:
+    cleaned = href
+    if "?" in  href:
+        cleaned = href.split("?")[0]
+    return cleaned
 
-driver = get_fb_login(
-    conf.fb_username, conf.fb_password, conf.gecko_binary, conf.gecko_headless
-)
-posts_links = []
+def reveal_post_links(driver, public_page_id):
+    # This a class name that's used to find specific URLs to the posts
+    CLASS_NAME_FIND_LINK = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gmql0nx0 gpro0wi8 b1v8xokw"
+    a_blocks = driver.find_elements(By.XPATH, f"//a[@class='{CLASS_NAME_FIND_LINK}']")
+    url = build_public_page_url(public_page_id)
+    hrefs = []
+    for a_block in a_blocks:
+        unreveald_link = a_block.get_attribute("href")
+        if url in unreveald_link:
+            if "#" in unreveald_link:
+                if a_block.is_displayed():
+                    a_block.click()
+                revealed_link = a_block.get_attribute("href")
+                cleaned_link = clean_href(revealed_link)
+                hrefs.append(cleaned_link)
+                sleep(2)
+    return hrefs
 
-try:
-    fb_search = get_search(driver, conf.fb_page_name)
-    posts_links = get_fb_post_linnks(fb_search, conf.amount_posts)
-except Exception as ex:
-    print("ERROR" + str(ex))
+def parse_post(driver, post_link):
+    driver.get(post_link)
+    # Time needed for the webpage to be fully loaded
+    sleep(5)
 
-# this is because some links are repeated
-posts_links_to_scrap: List[Tuple[str, webelement.WebElement]] = []
-for url, html in posts_links:
-    if url not in [p_l[0] for p_l in posts_links_to_scrap]:
-        posts_links_to_scrap.append((url, html))
+def parse_posts(driver, post_links: List[str]):
+    posts = []
+    for post_link in post_links:
+        posts.append(parse_post(driver, post_link))
+    return posts
 
-# export_links_csv(conf, posts_links_to_scrap)
-driver.quit()
 
-temp_filenames = export_netvizz_csv(conf, posts_links_to_scrap)
-for temp_fn in temp_filenames:
-    os.remove(temp_fn)
 
+def build_public_page_url(public_page_id: str) -> str:
+    return f"https://www.facebook.com/{public_page_id}"
+
+def access_to_public_page(driver: webdriver.Firefox, public_page_id: str) -> webdriver.Firefox:
+    url = build_public_page_url(public_page_id)
+    driver.get(url)
+    return driver
+
+def get_posts_from_view(driver: webdriver.Firefox):
+    # This identifies the HTML div segment of a post inside a fanpage
+    # This value may change over time 
+    CLASS_NAME_FULL_POST = "du4w35lb k4urcfbm l9j0dhe7 sjgh65i0"
+    divs = driver.find_elements(By.XPATH, f"//div[@class='{CLASS_NAME_FULL_POST}']")
+    return divs
+
+if __name__ == "__main__":
+    # Programa Principal
+    conf = ConfigManager.ConfigManager()
+    driver = get_fb_login(
+        conf.fb_username, conf.fb_password, conf.gecko_binary, conf.gecko_headless
+    )
+    posts_links = []
+    posts_source = sys.argv[1]
+    if posts_source == "search_page":
+        try:
+            fb_search = get_search(driver, conf.fb_page_name)
+            posts_links = get_fb_post_linnks(fb_search, conf.amount_posts)
+        except Exception as ex:
+            print("ERROR" + str(ex))
+        # this is because some links are repeated
+        posts_links_to_scrap: List[Tuple[str, webelement.WebElement]] = []
+        for url, html in posts_links:
+            if url not in [p_l[0] for p_l in posts_links_to_scrap]:
+                posts_links_to_scrap.append((url, html))
+        # export_links_csv(conf, posts_links_to_scrap)
+        driver.quit()
+        temp_filenames = export_netvizz_csv(conf, posts_links_to_scrap)
+        for temp_fn in temp_filenames:
+            os.remove(temp_fn)
+    elif posts_source == "public_page":
+        public_page = sys.argv[2]
+        amount = int(sys.argv[3])
+        driver = access_to_public_page(driver, public_page)
+        # Reveal links
+        # Time necessary for the page to be fully loaded
+        sleep(5)
+        driver, post_links = scroll_down_to_reveal_posts(driver, public_page, amount)
+
+        for i, l in enumerate(post_links):
+            print(i, l)
+
+        # driver, post_links = reveal_post_links(driver, public_page, amount)
+        # posts = parse_posts(driver, post_links)
+    else:
+        print(colored("ERROR: posts_from attribute is invalid.", 'red'))
