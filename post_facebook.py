@@ -467,7 +467,8 @@ class PostFacebook:
     def getSharesCount(self, fbStringToNumber):
 
         div = self.fb_login
-        if "/posts/" in self.urlLink:
+        current_url = self.fb_login.current_url
+        if "/posts/" in current_url:
             # This class name identifies the post
             MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
             divs = self.fb_login.find_elements_by_xpath(
@@ -493,7 +494,8 @@ class PostFacebook:
     def getReactionsCount(self, fbStringToNumber):
 
         div = self.fb_login
-        if "/posts/" in self.urlLink:
+        current_url = self.fb_login.current_url
+        if "/posts/" in current_url:
             # This class name identifies the post
             MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
             divs = self.fb_login.find_elements_by_xpath(
@@ -516,7 +518,8 @@ class PostFacebook:
     def getCommentsCount(self, fbStringToNumber):
 
         div = self.fb_login
-        if "/posts/" in self.urlLink:
+        current_url = self.fb_login.current_url
+        if "/posts/" in current_url:
             # This class name identifies the post
             MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
             divs = self.fb_login.find_elements_by_xpath(
@@ -669,14 +672,15 @@ class PostFacebook:
         Constant TEXT_DISPLAYED may need to be changed regularly.
         """
         div = self.fb_login
-        if "/posts/" in self.urlLink:
+        current_url = self.fb_login.current_url
+        if "/posts/" in current_url:
             # This class name identifies the post
             MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
             divs = self.fb_login.find_elements_by_xpath(
                 f"//div[@class='{MAIN_POST_CLASS_NAME}']"
             )
             div = divs[0]
-        if "/photos/" in self.urlLink:
+        if "/photos/" in current_url:
             CLASS_NAME_DIV = "bp9cbjyn j83agx80 buofh1pr ni8dbmo4 stjgntxs"
             div = div.find_element_by_xpath(f"//div[@class='{CLASS_NAME_DIV}']")
             div.click()
