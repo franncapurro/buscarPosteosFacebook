@@ -1,8 +1,9 @@
 import os
 import platform
-import traceback
 import sys
+import traceback
 from datetime import datetime
+from itertools import zip_longest
 from time import sleep
 from typing import List, Tuple
 
@@ -187,6 +188,7 @@ def export_netvizz_csv(
         "rea_HAHA",
         "rea_SAD",
         "rea_ANGRY",
+        "rea_CARE",
         # 'post_picture_descripcion',
         # 'poll_count',
         # 'titulo_link',
@@ -225,9 +227,11 @@ def export_netvizz_csv(
     posts_fb.save()
     return temp_filenames
 
+
 def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int):
-    # Assume 3 new posts per scrolldown
-    amount_scrolls = amount_posts // 3 + 1
+    # Assume 4 new posts per scrolldown, do at least 1
+    amount_scrolls = amount_posts // 4 + 1
+    print(amount_posts, amount_scrolls)
     body = driver.find_element_by_xpath("//body")
     post_links = []
     for _ in range(0, amount_scrolls):
@@ -236,14 +240,18 @@ def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int):
         body.send_keys(Keys.CONTROL + Keys.END)
         # Time needed for the new posts to be fully loaded
         sleep(2)
-    post_links = post_links[:amount_posts]
+        if len(post_links) >= amount_posts:
+            post_links = post_links[:amount_posts]
+            return driver, post_links
     return driver, post_links
+
 
 def clean_href(href: str) -> str:
     cleaned = href
-    if "?" in  href:
+    if "?" in href:
         cleaned = href.split("?")[0]
     return cleaned
+
 
 def reveal_post_links(driver, public_page_id):
     # This a class name that's used to find specific URLs to the posts
@@ -263,10 +271,12 @@ def reveal_post_links(driver, public_page_id):
                 sleep(2)
     return hrefs
 
+
 def parse_post(driver, post_link):
     driver.get(post_link)
     # Time needed for the webpage to be fully loaded
     sleep(5)
+
 
 def parse_posts(driver, post_links: List[str]):
     posts = []
@@ -275,21 +285,25 @@ def parse_posts(driver, post_links: List[str]):
     return posts
 
 
-
 def build_public_page_url(public_page_id: str) -> str:
     return f"https://www.facebook.com/{public_page_id}"
 
-def access_to_public_page(driver: webdriver.Firefox, public_page_id: str) -> webdriver.Firefox:
+
+def access_to_public_page(
+    driver: webdriver.Firefox, public_page_id: str
+) -> webdriver.Firefox:
     url = build_public_page_url(public_page_id)
     driver.get(url)
     return driver
 
+
 def get_posts_from_view(driver: webdriver.Firefox):
     # This identifies the HTML div segment of a post inside a fanpage
-    # This value may change over time 
+    # This value may change over time
     CLASS_NAME_FULL_POST = "du4w35lb k4urcfbm l9j0dhe7 sjgh65i0"
     divs = driver.find_elements(By.XPATH, f"//div[@class='{CLASS_NAME_FULL_POST}']")
     return divs
+
 
 if __name__ == "__main__":
     # Programa Principal
@@ -323,11 +337,11 @@ if __name__ == "__main__":
         # Time necessary for the page to be fully loaded
         sleep(5)
         driver, post_links = scroll_down_to_reveal_posts(driver, public_page, amount)
+        posts_links_to_scrap = list(zip_longest(post_links, []))
 
-        for i, l in enumerate(post_links):
-            print(i, l)
+        temp_filenames = export_netvizz_csv(conf, posts_links_to_scrap)
+        for temp_fn in temp_filenames:
+            os.remove(temp_fn)
 
-        # driver, post_links = reveal_post_links(driver, public_page, amount)
-        # posts = parse_posts(driver, post_links)
     else:
-        print(colored("ERROR: posts_from attribute is invalid.", 'red'))
+        print(colored("ERROR: posts_from attribute is invalid.", "red"))

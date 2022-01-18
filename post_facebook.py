@@ -26,8 +26,10 @@ from urllib.request import urlretrieve
 
 import bs4
 from PIL import Image
-from selenium.common.exceptions import (ElementClickInterceptedException,
-                                        ElementNotInteractableException)
+from selenium.common.exceptions import (
+    ElementClickInterceptedException,
+    ElementNotInteractableException,
+)
 from selenium.webdriver.common.keys import Keys
 from termcolor import colored
 
@@ -218,7 +220,8 @@ class PostFacebook:
             rea_HAHA,
             rea_SAD,
             rea_ANGRY,
-        ) = self.getReactions(self.fbStringToNumber)
+            rea_CARE,
+        ) = self.getReactions()
         # like_count_fb
         posts.append(like_count_fb)
 
@@ -254,6 +257,8 @@ class PostFacebook:
         posts.append(rea_SAD)
         # rea_ANGRY
         posts.append(rea_ANGRY)
+        # rea_CARE
+        posts.append(rea_CARE)
 
         # posts.append(post_picture_descripcion)
         # posts.append(poll_count)
@@ -329,9 +334,7 @@ class PostFacebook:
                 # 14 de diciembre de 2021 a las 15:30
                 day, month, year = tokens[0], tokens[2], tokens[4]
                 text_in_new_format = f"{day} {month} {year}"
-                post_date = datetime.strptime(
-                    text_in_new_format, "%d %B %Y"
-                )
+                post_date = datetime.strptime(text_in_new_format, "%d %B %Y")
             elif len(tokens) == 2 and "momento" in tokens:
                 # Hace un momento
                 post_date = datetime.now()
@@ -339,9 +342,7 @@ class PostFacebook:
                 # 3 de diciembre de 2021
                 day, month, year = tokens[0], tokens[2], tokens[4]
                 text_in_new_format = f"{day} {month} {year}"
-                post_date = datetime.strptime(
-                    text_in_new_format, "%d %B %Y"
-                )
+                post_date = datetime.strptime(text_in_new_format, "%d %B %Y")
             else:
                 print(colored("ERROR: publication date could not be parsed", "red"))
                 return ("", float(0), None, None)
@@ -350,7 +351,7 @@ class PostFacebook:
             post_published_unix = float(0)
             post_published_sql = None
             post_date_argentina = None
-            
+
         return (
             post_published_str,
             post_published_unix,
@@ -464,48 +465,86 @@ class PostFacebook:
         return text_wanted
 
     def getSharesCount(self, fbStringToNumber):
+
+        div = self.fb_login
+        if "/posts/" in self.urlLink:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+
+        CLASS_NAME_POSTS = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain"
         shares_count = 0
-        shares_count_a = self.html_bs.find_all(
-            "span",
-            {
-                "class": "d2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d9wwppkn fe6kdd0r mau55g9w c8b282yb hrzyx87i jq4qci2q a3bd9o3v b1v8xokw m9osqain"
-            },
+        shares_count_a = div.find_elements_by_xpath(
+            f".//span[@class='{CLASS_NAME_POSTS}']"
         )
-        if shares_count_a:
-            shares_count_a_text = shares_count_a[1].getText()
-            if "comentario" in shares_count_a_text:
-                return shares_count
-            shares_count_text = shares_count_a_text.replace(
-                " veces compartido", ""
-            ).replace(" vez compartido", "")
-            shares_count = fbStringToNumber.convertStringToNumber(shares_count_text)
+        for s_c_a in shares_count_a:
+            shares_count_a_text = s_c_a.text
+            if "compartido" in shares_count_a_text:
+                shares_count_text = shares_count_a_text.replace(
+                    " veces compartido", ""
+                ).replace(" vez compartido", "")
+                shares_count = fbStringToNumber.convertStringToNumber(shares_count_text)
+                break
         return shares_count
 
     def getReactionsCount(self, fbStringToNumber):
+
+        div = self.fb_login
+        if "/posts/" in self.urlLink:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+
+        CLASS_NAME = "gpro0wi8 pcp91wgn"
         reactions_count = 0
-        reactions_count_span = self.html_bs.find_all(
-            "span", {"class": "gpro0wi8 pcp91wgn"}
+        reactions_count_span = div.find_elements_by_xpath(
+            f".//span[@class='{CLASS_NAME}']"
         )
         if reactions_count_span:
-            reactions_count_text = reactions_count_span[0].getText()
+            reactions_count_text = reactions_count_span[0].text
             reactions_count = fbStringToNumber.convertStringToNumber(
                 reactions_count_text
             )
         return reactions_count
 
     def getCommentsCount(self, fbStringToNumber):
+
+        div = self.fb_login
+        if "/posts/" in self.urlLink:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+
         COMMENTS_SPAN_IN_LINK = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain"
         COMMENTS_SPAN_IN_VIDEO = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d9wwppkn mdeji52x e9vueds3 j5wam9gi b1v8xokw m9osqain"
-        pot_span_comments_link = self.html_bs.find_all("span", {"class": COMMENTS_SPAN_IN_LINK},)
-        pot_span_comments_video = self.html_bs.find_all("span", {"class": COMMENTS_SPAN_IN_VIDEO},)
+        pot_span_comments_link = div.find_elements_by_xpath(
+            f".//span[@class='{COMMENTS_SPAN_IN_LINK}']"
+        )
+        pot_span_comments_video = div.find_elements_by_xpath(
+            f".//span[@class='{COMMENTS_SPAN_IN_VIDEO}']"
+        )
 
         amount = 0
         for c_c_a in pot_span_comments_link + pot_span_comments_video:
-            text = c_c_a.getText()
+            text = c_c_a.text
             if "comentarios" in text:
                 if "mil" in text:
-                    decimal_n = float(text.replace("comentarios", "").replace("mil", "").replace(",", ".").strip())
-                    amount = int(decimal_n*1000)
+                    decimal_n = float(
+                        text.replace("comentarios", "")
+                        .replace("mil", "")
+                        .replace(",", ".")
+                        .strip()
+                    )
+                    amount = int(decimal_n * 1000)
                     break
                 amount = int(text.replace("comentarios", "").strip())
                 break
@@ -595,6 +634,14 @@ class PostFacebook:
             post_message = span.text
             return post_message
 
+        if "/photos/" in self.urlLink:
+            CLASS_NAME_DIV = "a8nywdso j7796vcc rz4wbd8a l29c1vbm"
+            div = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{CLASS_NAME_DIV}']"
+            )
+            post_message = div[0].text
+            return post_message
+
         post_message_divs = self.html_bs.find_all(
             "div", {"data-ad-comet-preview": "message"}
         )
@@ -621,14 +668,28 @@ class PostFacebook:
         Returns True if the click was done, False otherwise.
         Constant TEXT_DISPLAYED may need to be changed regularly.
         """
+        div = self.fb_login
+        if "/posts/" in self.urlLink:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+        if "/photos/" in self.urlLink:
+            CLASS_NAME_DIV = "bp9cbjyn j83agx80 buofh1pr ni8dbmo4 stjgntxs"
+            div = div.find_element_by_xpath(f"//div[@class='{CLASS_NAME_DIV}']")
+            div.click()
+            return True
+
         TEXT_DISPLAYED = "Consulta quién reaccionó a esto"
-        for ps in self.fb_login.find_elements_by_tag_name("span"):
-            if ps.get_attribute("aria-label") == TEXT_DISPLAYED:
-                try:
-                    ps.click()
-                    return True
-                except ElementClickInterceptedException:
-                    continue
+        spans = div.find_elements_by_xpath(f".//span[@aria-label='{TEXT_DISPLAYED}']")
+        for ps in spans:
+            try:
+                ps.click()
+                return True
+            except ElementClickInterceptedException:
+                continue
         print(colored(f"ERROR: button {TEXT_DISPLAYED} not found", "red"))
         return False
 
@@ -766,7 +827,7 @@ class PostFacebook:
             os.remove(temp_filename)
         return reactions
 
-    def getReactions(self, fbStringToNumber):
+    def getReactions(self):
         # Click on "Consulta quién reaccionó a esto"
         self.click_to_see_all_reactions()
         # Click on "Más"
@@ -788,4 +849,4 @@ class PostFacebook:
         rea_ANGRY = reactions["hates"]
         rea_CARE = reactions["cares"]
 
-        return like_count_fb, rea_LOVE, rea_WOW, rea_HAHA, rea_SAD, rea_ANGRY
+        return like_count_fb, rea_LOVE, rea_WOW, rea_HAHA, rea_SAD, rea_ANGRY, rea_CARE
