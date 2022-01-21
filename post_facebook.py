@@ -29,6 +29,7 @@ from PIL import Image
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
     ElementNotInteractableException,
+    NoSuchElementException
 )
 from selenium.webdriver.common.keys import Keys
 from termcolor import colored
@@ -476,6 +477,14 @@ class PostFacebook:
             )
             div = divs[0]
 
+        if "/watch/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "cwj9ozl2 j83agx80 datstx6m"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+
         CLASS_NAME_POSTS = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain"
         shares_count = 0
         shares_count_a = div.find_elements_by_xpath(
@@ -503,6 +512,20 @@ class PostFacebook:
             )
             div = divs[0]
 
+        if "/watch/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "cwj9ozl2 j83agx80 datstx6m"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+            CLASS_NAME_COMMENTS_DIV = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of n00je7tq arfg74bv qs9ysxi8 k77z8yql l9j0dhe7 abiwlrkh p8dawk7l lzcic4wl gmql0nx0 j83agx80 ni8dbmo4 stjgntxs"
+            div_comments = div.find_element_by_xpath(f".//div[@class='{CLASS_NAME_COMMENTS_DIV}']")
+            amount = fbStringToNumber.convertStringToNumber(
+                div_comments.text
+            )
+            return amount
+
         CLASS_NAME = "gpro0wi8 pcp91wgn"
         reactions_count = 0
         reactions_count_span = div.find_elements_by_xpath(
@@ -522,6 +545,13 @@ class PostFacebook:
         if "/posts/" in current_url:
             # This class name identifies the post
             MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+        if "/watch/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "cwj9ozl2 j83agx80 datstx6m"
             divs = self.fb_login.find_elements_by_xpath(
                 f"//div[@class='{MAIN_POST_CLASS_NAME}']"
             )
@@ -622,22 +652,40 @@ class PostFacebook:
             post_picture_descripcion = full_picture_img[0].get("alt")
         return full_picture, post_picture_descripcion
 
+    def click_to_see_full_text(self):
+        CLASS_NAME = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gpro0wi8 oo9gr5id lrazzd5p"
+        divs = self.fb_login.find_elements_by_xpath(f"//div[@class='{CLASS_NAME}']")
+        for div in divs:
+            if div.text == "Ver más":
+                div.click()
+                sleep(1)
+                break
+
+
     def getPostMessage(self):
-        # TODO: this function fails for publication pages that are facebook videos or facebook photos
         # TODO: this function is not capable of extracting emojis
         post_message = ""
+        current_url = self.fb_login.current_url
+        if "watch" in current_url:
 
-        if "watch" in self.urlLink:
-            CLASS_NAME = (
-                "a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7 ltmttdrg g0qnabr5 r8blr3vg"
+            self.click_to_see_full_text()
+
+            CLASS_NAME_OPTION_0 = (
+                "e5nlhep0 nu4hu5il eg9m0zos"
             )
-            span = self.fb_login.find_elements_by_xpath(
-                f"//span[@class='{CLASS_NAME}']"
-            )
-            post_message = span.text
+            CLASS_NAME_OPTION_1 = "e5nlhep0"
+            try:
+                div = self.fb_login.find_element_by_xpath(
+                    f"//div[@class='{CLASS_NAME_OPTION_0}']"
+                )
+            except NoSuchElementException:
+                div = self.fb_login.find_element_by_xpath(
+                    f"//div[@class='{CLASS_NAME_OPTION_1}']"
+                )
+            post_message = div.text
             return post_message
 
-        if "/photos/" in self.urlLink:
+        if "/photos/" in current_url:
             CLASS_NAME_DIV = "a8nywdso j7796vcc rz4wbd8a l29c1vbm"
             div = self.fb_login.find_elements_by_xpath(
                 f"//div[@class='{CLASS_NAME_DIV}']"
@@ -685,6 +733,18 @@ class PostFacebook:
             div = div.find_element_by_xpath(f"//div[@class='{CLASS_NAME_DIV}']")
             div.click()
             return True
+        if "/watch/" in current_url:
+
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "cwj9ozl2 j83agx80 datstx6m"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+
+            CLASS_NAME_DIV = "stjgntxs ni8dbmo4 bkfpd7mw buofh1pr j83agx80 bp9cbjyn"
+            div_reactions = div.find_element_by_xpath(f".//div[@class='{CLASS_NAME_DIV}']")
+            div_reactions.click()
 
         TEXT_DISPLAYED = "Consulta quién reaccionó a esto"
         spans = div.find_elements_by_xpath(f".//span[@aria-label='{TEXT_DISPLAYED}']")
