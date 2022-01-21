@@ -12,9 +12,9 @@ class ConfigManager:
         self.output_post_filename_prefix = None
         self.amount_posts = None
         self.gecko_binary = None
-        self.loadConfigData()
+        self.load_config_data()
 
-    def loadConfigData(self):
+    def load_config_data(self):
         with open("config.json", "r") as config_file:
             filecontents = json.load(config_file)
             fbSection = filecontents["facebook"][0]

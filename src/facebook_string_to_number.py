@@ -1,5 +1,5 @@
 class FacebookStringToNumber:
-    def convertStringToNumber(self, text):
+    def convert_string_to_number(self, text):
         text_clean = text
         text_clean = text_clean.replace("\xa0", "")
         text_clean = text_clean.replace("personas", "")

@@ -123,8 +123,8 @@ def export_netvizz_csv(
         print(colored(f"Parsing post with url {post_link}", "green"))
         try:
             post = post_facebook.PostFacebook(post_link, fb_login, html_preview)
-            fn = post.SaveHtml(config.base_path)
-            posts = post.ParsePostHTML()
+            fn = post.save_html(config.base_path)
+            posts = post.parse_post_html()
             posts_fb.append(posts)
             temp_filenames.append(fn)
             sleep(10)
