@@ -1,21 +1,3 @@
-# -*- coding: utf-8 -*-
-
-#    This file is part of buscarPostFacebook.
-#
-#    buscarPostFacebook is free software; you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation; either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    buscarPostFacebook is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with buscarPostFacebook; if not, write to the Free Software
-#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
 import hashlib
 import locale
 import os
@@ -27,12 +9,13 @@ from urllib.request import urlretrieve
 import bs4
 from PIL import Image
 from selenium.common.exceptions import (ElementClickInterceptedException,
-                                        ElementNotInteractableException)
+                                        ElementNotInteractableException,
+                                        NoSuchElementException)
 from selenium.webdriver.common.keys import Keys
 from termcolor import colored
 
-from FacebookStringToNumber import FacebookStringToNumber
-from TextOutputFile import TextOutputFile
+from facebook_string_to_number import FacebookStringToNumber
+from text_output_file import TextOutputFile
 
 
 class PostFacebook:
@@ -41,14 +24,14 @@ class PostFacebook:
         self.fb_login = fb_login
         # HTML obtained from search page
         self.html_preview = html_preview
-        self.html_preview_bs = self._getHtmlPost(html_preview)
+        self.html_preview_bs = self._get_html_post(html_preview)
         # HTML obtained from the publication specific link
-        self.html_raw = self._getHtmlFacebook()
-        self.html_bs = self._getHtmlPost(self.html_raw)
+        self.html_raw = self._get_html_facebook()
+        self.html_bs = self._get_html_post(self.html_raw)
 
         self.fbStringToNumber = FacebookStringToNumber()
 
-    def _getHtmlFacebook(self):
+    def _get_html_facebook(self):
         url = self.urlLink.replace("videos", "posts")
         self.fb_login.get(url)
         sleep(5)
@@ -64,14 +47,14 @@ class PostFacebook:
             print(colored("ERROR" + str(ex), "red"))
         return html
 
-    def _getHtmlPost(self, html_raw):
+    def _get_html_post(self, html_raw):
         contenido = None
         if html_raw:
             contenido = bs4.BeautifulSoup(html_raw, "lxml")
         return contenido
 
-    def SaveHtml(self, base_path):
-        post_id, page_id = self.getPostID()
+    def save_html(self, base_path):
+        post_id, page_id = self.get_post_id()
         text_output_file = TextOutputFile(str(self.html_raw))
         text_output_filename = "post_page_" + page_id + "_" + post_id + ".html"
         output_filename_html = os.path.join(base_path, text_output_filename)
@@ -80,10 +63,10 @@ class PostFacebook:
         text_output_file.save(f"file_{hash_object.hexdigest()}")
         return f"file_{hash_object.hexdigest()}"
 
-    def ParsePostHTML(self):
+    def parse_post_html(self):
         posts = []
 
-        page_name = self.getPageName()
+        page_name = self.get_page_name()
         if page_name is None:
             print(colored("ERROR: page name could not be obtained", "red"))
             return posts
@@ -92,30 +75,20 @@ class PostFacebook:
         # medio
         posts.append(page_name)
 
-        post_id, page_id = self.getPostID()
+        post_id, page_id = self.get_post_id()
         # by
         posts.append(page_id)
         # post_id
         posts.append(post_id)
-        post_url = self.getPostURL(page_id, post_id)
+        post_url = self.get_post_url(page_id, post_id)
         # post_link
         posts.append(post_url)
 
-        post_message = self.getPostMessage()
+        post_message = self.get_post_message()
         # post_message
         posts.append(post_message)
 
-        # # picture
-        # picture = self.getPicture()
-        # posts.append(picture)
-
-        # # full_picture
-        # full_picture, post_picture_descripcion = self.getFullPicture()
-        # posts.append(full_picture)
-
         link = ""
-        link_domain = ""
-        poll_count = 0
         link_div = self.html_bs.find_all(
             "a",
             {
@@ -128,21 +101,11 @@ class PostFacebook:
             a_link_url_query = urllib.parse.urlsplit(a_link_href).query
             link_dict = urllib.parse.parse_qs(a_link_url_query)
             link = link_dict.get("u", [""])[0]
-            # link_domain
-            link_domain_div = self.html_bs.find_all(
-                "span",
-                {
-                    "class": "d2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 tia6h79c fe6kdd0r mau55g9w c8b282yb iv3no6db e9vueds3 j5wam9gi b1v8xokw m9osqain"
-                },
-            )
-            if link_domain_div:
-                link_domain = link_domain_div[0].getText()
             posts[0] = "link"
         else:
             link_video = self.html_bs.select("video[src]")
             if link_video:
-                a_link_href = self.getVideoLink(link_video)
-                link_domain = "facebook.com"
+                a_link_href = self.get_video_link(link_video)
                 posts[0] = "video"
             else:
                 link_imagen_tag = self.html_bs.find_all(
@@ -151,7 +114,6 @@ class PostFacebook:
                 if link_imagen_tag:
                     a_link_href = link_imagen_tag[0].get("href")
                     link = "https://www.facebook.com" + a_link_href
-                    link_domain = "facebook.com"
                     posts[0] = "imagen"
                 else:
                     link_imagen_tag = self.html_bs.find_all(
@@ -160,7 +122,6 @@ class PostFacebook:
                     if link_imagen_tag:
                         a_link_href = link_imagen_tag[0].get("href")
                         link = "https://www.facebook.com" + a_link_href
-                        link_domain = "facebook.com"
                         posts[0] = "imagen"
                     else:
                         link_imagen_tag = self.html_bs.find_all(
@@ -169,7 +130,6 @@ class PostFacebook:
                         if link_imagen_tag:
                             a_link_href = link_imagen_tag[0].get("href")
                             link = "https://www.facebook.com" + a_link_href
-                            link_domain = "facebook.com"
                             posts[0] = "imagen"
                         else:
                             cabecera_span_tag = self.html_bs.find_all(
@@ -178,18 +138,6 @@ class PostFacebook:
                             for span in cabecera_span_tag:
                                 if "encuesta" in str(span):
                                     posts[0] = "encuesta"
-                                    poll_tag = self.html_bs.find_all(
-                                        "div", {"class": "_204q"}
-                                    )
-                                    if poll_tag:
-                                        poll_count_text = (
-                                            poll_tag[0].getText().replace("votos", "")
-                                        )
-                                        poll_count = (
-                                            self.fbStringToNumber.convertStringToNumber(
-                                                poll_count_text
-                                            )
-                                        )
                                     break
         # link
         posts.append(link)
@@ -201,15 +149,9 @@ class PostFacebook:
             post_published_unix,
             post_published_sql,
             post_date_argentina,
-        ) = self.getPostDate()
+        ) = self.get_post_date()
         # post_published
         posts.append(post_published_str)
-        # # post_published_unix
-        # posts.append(post_published_unix)
-        # # post_published_sql
-        # posts.append(post_published_sql)
-        # # post_hora_argentina
-        # posts.append(post_date_argentina)
 
         (
             like_count_fb,
@@ -218,20 +160,21 @@ class PostFacebook:
             rea_HAHA,
             rea_SAD,
             rea_ANGRY,
-        ) = self.getReactions(self.fbStringToNumber)
+            rea_CARE,
+        ) = self.get_reactions()
         # like_count_fb
         posts.append(like_count_fb)
 
         # comments_count_fb
-        comments_count = self.getCommentsCount(self.fbStringToNumber)
+        comments_count = self.get_comments_count(self.fbStringToNumber)
         # comments_count_fb
         posts.append(comments_count)
 
-        reactions_count = self.getReactionsCount(self.fbStringToNumber)
+        reactions_count = self.get_reactions_count(self.fbStringToNumber)
         # reactions_count_fb
         posts.append(reactions_count)
 
-        shares_count = self.getSharesCount(self.fbStringToNumber)
+        shares_count = self.get_shares_count(self.fbStringToNumber)
         # shares_count_fb
         posts.append(shares_count)
 
@@ -254,45 +197,12 @@ class PostFacebook:
         posts.append(rea_SAD)
         # rea_ANGRY
         posts.append(rea_ANGRY)
+        # rea_CARE
+        posts.append(rea_CARE)
 
-        # posts.append(post_picture_descripcion)
-        # posts.append(poll_count)
-
-        # titulo = self.getTituloLink()
-        # subtitulo_post = "" #no existe mas este dato
-        # # titulo_link
-        # posts.append(titulo)
-        # # subtitulo_link
-        # posts.append(subtitulo_post)
-
-        # mencionesLista, hashtagsLista = self.getMencionesHashtags()
-        # # menciones
-        # posts.append(mencionesLista)
-        # # hashtags
-        # posts.append(hashtagsLista)
-
-        # video_plays_count = self.getVideosPlaysCount(self.fbStringToNumber)
-        # # video_plays_count
-        # posts.append(video_plays_count)
-
-        # fb_action_tags_text = self.getFBActionTagsText()
-        # # fb_action_tags_text
-        # posts.append(fb_action_tags_text)
-
-        # has_emoji = self.getHasEmoji()
-        # # has_emoji
-        # posts.append(has_emoji)
-
-        # tiene_hashtags = self.getTieneHashtags(hashtagsLista)
-        # # tiene_hashtags
-        # posts.append(tiene_hashtags)
-
-        # tiene_menciones = self.getTieneHashtags(mencionesLista)
-        # # tiene_menciones
-        # posts.append(tiene_menciones)
         return posts
 
-    def getPostDate(self):
+    def get_post_date(self):
         """
         The date may be shown in any of the following ways:
         3 de diciembre de 2021
@@ -329,9 +239,7 @@ class PostFacebook:
                 # 14 de diciembre de 2021 a las 15:30
                 day, month, year = tokens[0], tokens[2], tokens[4]
                 text_in_new_format = f"{day} {month} {year}"
-                post_date = datetime.strptime(
-                    text_in_new_format, "%d %B %Y"
-                )
+                post_date = datetime.strptime(text_in_new_format, "%d %B %Y")
             elif len(tokens) == 2 and "momento" in tokens:
                 # Hace un momento
                 post_date = datetime.now()
@@ -339,9 +247,7 @@ class PostFacebook:
                 # 3 de diciembre de 2021
                 day, month, year = tokens[0], tokens[2], tokens[4]
                 text_in_new_format = f"{day} {month} {year}"
-                post_date = datetime.strptime(
-                    text_in_new_format, "%d %B %Y"
-                )
+                post_date = datetime.strptime(text_in_new_format, "%d %B %Y")
             else:
                 print(colored("ERROR: publication date could not be parsed", "red"))
                 return ("", float(0), None, None)
@@ -350,7 +256,7 @@ class PostFacebook:
             post_published_unix = float(0)
             post_published_sql = None
             post_date_argentina = None
-            
+
         return (
             post_published_str,
             post_published_unix,
@@ -358,13 +264,13 @@ class PostFacebook:
             post_date_argentina,
         )
 
-    def getVideoLink(self, link_video):
+    def get_video_link(self, link_video):
         link = link_video[0].get("src")
         if link:
             link = link.replace("blob:", "")
         return link
 
-    def getPageName(self):
+    def get_page_name(self):
         CLASS_NAME = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gpro0wi8 oo9gr5id lrazzd5p"
         # Find a tags satisfying some condition
         a_tags = self.fb_login.find_elements_by_xpath(f"//a[@class='{CLASS_NAME}']")
@@ -372,140 +278,119 @@ class PostFacebook:
         text = a_tag_wanted.text
         return text
 
-    def getTieneHashtags(self, hashtagsLista):
-        tiene_hashtags = False
-        if hashtagsLista:
-            tiene_hashtags = True
-        return tiene_hashtags
+    def get_shares_count(self, fbStringToNumber):
 
-    def getHasEmoji(self):
-        has_emoji = False
-        post_message_div = self.html_bs.find_all(
-            "div", {"data-ad-comet-preview": "message"}
-        )
-        if post_message_div:
-            emoji_tags = post_message_div[0].find_all(
-                "span",
-                {
-                    "class": "q9uorilb tbxw36s4 knj5qynh kvgmc6g5 ditlmg2l oygrvhab nvdbi5me fgm26odu gl3lb2sf hhz5lgdu"
-                },
+        div = self.fb_login
+        current_url = self.fb_login.current_url
+        if "/posts/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
             )
-            if emoji_tags:
-                has_emoji = True
-        return has_emoji
+            div = divs[0]
 
-    def getFBActionTagsText(self):
-        fb_action_tags_text = ""
-        fb_action_tags = self.html_bs.find_all("span", {"class": "fcg"})
-        if fb_action_tags:
-            fb_action_tags_text = fb_action_tags[0].getText()
-        return fb_action_tags_text
-
-    def getVideosPlaysCount(self, fbStringToNumber):
-        video_plays_count = 0
-        video_play_count_tags = self.html_bs.find_all(
-            "div", {"class": "lfloat _ohe _50f8"}
-        )
-        if video_play_count_tags:
-            video_play_count_span_text = (
-                video_play_count_tags[0].getText().replace("reproducciones", "")
+        if "/watch/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "cwj9ozl2 j83agx80 datstx6m"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
             )
-            video_plays_count = fbStringToNumber.convertStringToNumber(
-                video_play_count_span_text
-            )
-        else:
-            video_play_count_tags = self.html_bs.find_all("span", {"class": "_26fq"})
-            if video_play_count_tags:
-                video_play_count_span_text = (
-                    video_play_count_tags[0].getText().replace("reproducciones", "")
-                )
-                video_plays_count = fbStringToNumber.convertStringToNumber(
-                    video_play_count_span_text
-                )
+            div = divs[0]
 
-        return video_plays_count
-
-    def getMencionesHashtags(self):
-        mencionesLista = []
-        hashtagsLista = []
-        post_message_html = self.html_bs.find_all(
-            "div", {"data-ad-comet-preview": "message"}
-        )
-        if post_message_html:
-            menciones = post_message_html[0].find_all(
-                "a",
-                {
-                    "class": "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl q66pz984 gpro0wi8 b1v8xokw"
-                },
-            )
-            for mencion in menciones:
-                mencionesLista.append(mencion.getText())
-
-            hashtags = post_message_html[0].find_all("span", {"class": "_58cm"})
-            for hashtag in hashtags:
-                hashtagsLista.append(hashtag.getText())
-        return mencionesLista, hashtagsLista
-
-    def getTituloLink(self):
-        CLASS_NAME = "a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7 ojkyduve"
-        text_wanted = ""
-        span_tags = self.html_bs.find_all("span", {"class": CLASS_NAME})
-        index_minus_one = 0
-        for i, span_tag in enumerate(span_tags):
-            span_text_inside = span_tag.getText()
-            if "Anteriores" in span_text_inside:
-                index_minus_one = i
-                try:
-                    span_tag_wanted = span_tags[index_minus_one + 1]
-                    text_wanted = span_tag_wanted.getText()
-                    break
-                except IndexError:
-                    continue
-        return text_wanted
-
-    def getSharesCount(self, fbStringToNumber):
+        CLASS_NAME_POSTS = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain"
         shares_count = 0
-        shares_count_a = self.html_bs.find_all(
-            "span",
-            {
-                "class": "d2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 d9wwppkn fe6kdd0r mau55g9w c8b282yb hrzyx87i jq4qci2q a3bd9o3v b1v8xokw m9osqain"
-            },
+        shares_count_a = div.find_elements_by_xpath(
+            f".//span[@class='{CLASS_NAME_POSTS}']"
         )
-        if shares_count_a:
-            shares_count_a_text = shares_count_a[1].getText()
-            if "comentario" in shares_count_a_text:
-                return shares_count
-            shares_count_text = shares_count_a_text.replace(
-                " veces compartido", ""
-            ).replace(" vez compartido", "")
-            shares_count = fbStringToNumber.convertStringToNumber(shares_count_text)
+        for s_c_a in shares_count_a:
+            shares_count_a_text = s_c_a.text
+            if "compartido" in shares_count_a_text:
+                shares_count_text = shares_count_a_text.replace(
+                    " veces compartido", ""
+                ).replace(" vez compartido", "")
+                shares_count = fbStringToNumber.convert_string_to_number(shares_count_text)
+                break
         return shares_count
 
-    def getReactionsCount(self, fbStringToNumber):
+    def get_reactions_count(self, fbStringToNumber):
+
+        div = self.fb_login
+        current_url = self.fb_login.current_url
+        if "/posts/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+
+        if "/watch/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "cwj9ozl2 j83agx80 datstx6m"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+            CLASS_NAME_COMMENTS_DIV = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of n00je7tq arfg74bv qs9ysxi8 k77z8yql l9j0dhe7 abiwlrkh p8dawk7l lzcic4wl gmql0nx0 j83agx80 ni8dbmo4 stjgntxs"
+            div_comments = div.find_element_by_xpath(
+                f".//div[@class='{CLASS_NAME_COMMENTS_DIV}']"
+            )
+            amount = fbStringToNumber.convert_string_to_number(div_comments.text)
+            return amount
+
+        CLASS_NAME = "gpro0wi8 pcp91wgn"
         reactions_count = 0
-        reactions_count_span = self.html_bs.find_all(
-            "span", {"class": "gpro0wi8 pcp91wgn"}
+        reactions_count_span = div.find_elements_by_xpath(
+            f".//span[@class='{CLASS_NAME}']"
         )
         if reactions_count_span:
-            reactions_count_text = reactions_count_span[0].getText()
-            reactions_count = fbStringToNumber.convertStringToNumber(
+            reactions_count_text = reactions_count_span[0].text
+            reactions_count = fbStringToNumber.convert_string_to_number(
                 reactions_count_text
             )
         return reactions_count
 
-    def getCommentsCount(self, fbStringToNumber):
+    def get_comments_count(self, fbStringToNumber):
+
+        div = self.fb_login
+        current_url = self.fb_login.current_url
+        if "/posts/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+        if "/watch/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "cwj9ozl2 j83agx80 datstx6m"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+
         COMMENTS_SPAN_IN_LINK = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain"
         COMMENTS_SPAN_IN_VIDEO = "d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 d9wwppkn mdeji52x e9vueds3 j5wam9gi b1v8xokw m9osqain"
-        pot_span_comments_link = self.html_bs.find_all("span", {"class": COMMENTS_SPAN_IN_LINK},)
-        pot_span_comments_video = self.html_bs.find_all("span", {"class": COMMENTS_SPAN_IN_VIDEO},)
+        pot_span_comments_link = div.find_elements_by_xpath(
+            f".//span[@class='{COMMENTS_SPAN_IN_LINK}']"
+        )
+        pot_span_comments_video = div.find_elements_by_xpath(
+            f".//span[@class='{COMMENTS_SPAN_IN_VIDEO}']"
+        )
 
         amount = 0
         for c_c_a in pot_span_comments_link + pot_span_comments_video:
-            text = c_c_a.getText()
+            text = c_c_a.text
             if "comentarios" in text:
                 if "mil" in text:
-                    decimal_n = float(text.replace("comentarios", "").replace("mil", "").replace(",", ".").strip())
-                    amount = int(decimal_n*1000)
+                    decimal_n = float(
+                        text.replace("comentarios", "")
+                        .replace("mil", "")
+                        .replace(",", ".")
+                        .strip()
+                    )
+                    amount = int(decimal_n * 1000)
                     break
                 amount = int(text.replace("comentarios", "").strip())
                 break
@@ -516,10 +401,10 @@ class PostFacebook:
                 pass
         return amount
 
-    def getPostURL(self, page_id, post_id):
+    def get_post_url(self, page_id, post_id):
         return self.urlLink
 
-    def getPostID(self):
+    def get_post_id(self):
         tokens = self.urlLink.replace("https://www.facebook.com/", "").split("/")
         page_id, post_id = ("", "")
         try:
@@ -540,59 +425,42 @@ class PostFacebook:
             )
         return post_id, page_id
 
-    def getPicture(self):
-        picture = ""
+    def click_to_see_full_text(self):
+        CLASS_NAME = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gpro0wi8 oo9gr5id lrazzd5p"
+        divs = self.fb_login.find_elements_by_xpath(f"//div[@class='{CLASS_NAME}']")
+        for div in divs:
+            if div.text == "Ver más":
+                div.click()
+                sleep(1)
+                break
 
-        picture_img = self.html_preview_bs.find_all(
-            "img", {"class": "a8c37x1j bixrwtb6"}
-        )
-        if picture_img:
-            picture = picture_img[0].get("src")
-            return picture
-
-        picture_img_div = self.html_preview_bs.find_all(
-            "div", {"class": "l9j0dhe7 pfnyh3mw aph9nnby"}
-        )
-        if picture_img_div:
-            picture_img = picture_img_div[0].find_all("img")
-            if picture_img:
-                picture = picture_img[0].get("src")
-                a_link_url_query = urllib.parse.urlsplit(picture).query
-                link_dict = urllib.parse.parse_qs(a_link_url_query)
-                picture = link_dict.get("url", [""])[0]
-
-        return picture
-
-    def getFullPicture(self):
-        full_picture = ""
-        post_picture_descripcion = ""
-        full_picture_img = self.html_bs.find_all(
-            "img",
-            {
-                "class": "i09qtzwb n7fi1qx3 datstx6m pmk7jnqg j9ispegn kr520xx4 k4urcfbm bixrwtb6"
-            },
-        )
-        if full_picture_img:
-            full_picture = full_picture_img[0].get("src")
-            a_link_url_query = urllib.parse.urlsplit(full_picture).query
-            link_dict = urllib.parse.parse_qs(a_link_url_query)
-            full_picture = link_dict.get("url", [""])[0]
-            post_picture_descripcion = full_picture_img[0].get("alt")
-        return full_picture, post_picture_descripcion
-
-    def getPostMessage(self):
-        # TODO: this function fails for publication pages that are facebook videos or facebook photos
+    def get_post_message(self):
         # TODO: this function is not capable of extracting emojis
         post_message = ""
+        current_url = self.fb_login.current_url
+        if "watch" in current_url:
 
-        if "watch" in self.urlLink:
-            CLASS_NAME = (
-                "a8c37x1j ni8dbmo4 stjgntxs l9j0dhe7 ltmttdrg g0qnabr5 r8blr3vg"
+            self.click_to_see_full_text()
+
+            CLASS_NAME_OPTION_0 = "e5nlhep0 nu4hu5il eg9m0zos"
+            CLASS_NAME_OPTION_1 = "e5nlhep0"
+            try:
+                div = self.fb_login.find_element_by_xpath(
+                    f"//div[@class='{CLASS_NAME_OPTION_0}']"
+                )
+            except NoSuchElementException:
+                div = self.fb_login.find_element_by_xpath(
+                    f"//div[@class='{CLASS_NAME_OPTION_1}']"
+                )
+            post_message = div.text
+            return post_message
+
+        if "/photos/" in current_url:
+            CLASS_NAME_DIV = "a8nywdso j7796vcc rz4wbd8a l29c1vbm"
+            div = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{CLASS_NAME_DIV}']"
             )
-            span = self.fb_login.find_elements_by_xpath(
-                f"//span[@class='{CLASS_NAME}']"
-            )
-            post_message = span.text
+            post_message = div[0].text
             return post_message
 
         post_message_divs = self.html_bs.find_all(
@@ -621,15 +489,43 @@ class PostFacebook:
         Returns True if the click was done, False otherwise.
         Constant TEXT_DISPLAYED may need to be changed regularly.
         """
+        div = self.fb_login
+        current_url = self.fb_login.current_url
+        if "/posts/" in current_url:
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "d2edcug0 tr9rh885 oh7imozk abvwweq7 ejjq64ki"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+        if "/photos/" in current_url:
+            CLASS_NAME_DIV = "bp9cbjyn j83agx80 buofh1pr ni8dbmo4 stjgntxs"
+            div = div.find_element_by_xpath(f"//div[@class='{CLASS_NAME_DIV}']")
+            div.click()
+            return True
+        if "/watch/" in current_url:
+
+            # This class name identifies the post
+            MAIN_POST_CLASS_NAME = "cwj9ozl2 j83agx80 datstx6m"
+            divs = self.fb_login.find_elements_by_xpath(
+                f"//div[@class='{MAIN_POST_CLASS_NAME}']"
+            )
+            div = divs[0]
+
+            CLASS_NAME_DIV = "stjgntxs ni8dbmo4 bkfpd7mw buofh1pr j83agx80 bp9cbjyn"
+            div_reactions = div.find_element_by_xpath(
+                f".//div[@class='{CLASS_NAME_DIV}']"
+            )
+            div_reactions.click()
+
         TEXT_DISPLAYED = "Consulta quién reaccionó a esto"
-        for ps in self.fb_login.find_elements_by_tag_name("span"):
-            if ps.get_attribute("aria-label") == TEXT_DISPLAYED:
-                try:
-                    ps.click()
-                    return True
-                except ElementClickInterceptedException:
-                    continue
-        print(colored(f"ERROR: button {TEXT_DISPLAYED} not found", "red"))
+        spans = div.find_elements_by_xpath(f".//span[@aria-label='{TEXT_DISPLAYED}']")
+        for ps in spans:
+            try:
+                ps.click()
+                return True
+            except ElementClickInterceptedException:
+                continue
         return False
 
     def get_divs_for_main_reactions(self):
@@ -766,7 +662,7 @@ class PostFacebook:
             os.remove(temp_filename)
         return reactions
 
-    def getReactions(self, fbStringToNumber):
+    def get_reactions(self):
         # Click on "Consulta quién reaccionó a esto"
         self.click_to_see_all_reactions()
         # Click on "Más"
@@ -788,4 +684,4 @@ class PostFacebook:
         rea_ANGRY = reactions["hates"]
         rea_CARE = reactions["cares"]
 
-        return like_count_fb, rea_LOVE, rea_WOW, rea_HAHA, rea_SAD, rea_ANGRY
+        return like_count_fb, rea_LOVE, rea_WOW, rea_HAHA, rea_SAD, rea_ANGRY, rea_CARE
