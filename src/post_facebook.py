@@ -1,21 +1,3 @@
-# -*- coding: utf-8 -*-
-
-#    This file is part of buscarPostFacebook.
-#
-#    buscarPostFacebook is free software; you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation; either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    buscarPostFacebook is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with buscarPostFacebook; if not, write to the Free Software
-#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
 import hashlib
 import locale
 import os
@@ -26,11 +8,9 @@ from urllib.request import urlretrieve
 
 import bs4
 from PIL import Image
-from selenium.common.exceptions import (
-    ElementClickInterceptedException,
-    ElementNotInteractableException,
-    NoSuchElementException
-)
+from selenium.common.exceptions import (ElementClickInterceptedException,
+                                        ElementNotInteractableException,
+                                        NoSuchElementException)
 from selenium.webdriver.common.keys import Keys
 from termcolor import colored
 
@@ -109,8 +89,6 @@ class PostFacebook:
         posts.append(post_message)
 
         link = ""
-        link_domain = ""
-        poll_count = 0
         link_div = self.html_bs.find_all(
             "a",
             {
@@ -123,21 +101,11 @@ class PostFacebook:
             a_link_url_query = urllib.parse.urlsplit(a_link_href).query
             link_dict = urllib.parse.parse_qs(a_link_url_query)
             link = link_dict.get("u", [""])[0]
-            # link_domain
-            link_domain_div = self.html_bs.find_all(
-                "span",
-                {
-                    "class": "d2edcug0 hpfvmrgz qv66sw1b c1et5uql b0tq1wua a8c37x1j keod5gw0 nxhoafnm aigsh9s9 tia6h79c fe6kdd0r mau55g9w c8b282yb iv3no6db e9vueds3 j5wam9gi b1v8xokw m9osqain"
-                },
-            )
-            if link_domain_div:
-                link_domain = link_domain_div[0].getText()
             posts[0] = "link"
         else:
             link_video = self.html_bs.select("video[src]")
             if link_video:
                 a_link_href = self.getVideoLink(link_video)
-                link_domain = "facebook.com"
                 posts[0] = "video"
             else:
                 link_imagen_tag = self.html_bs.find_all(
@@ -146,7 +114,6 @@ class PostFacebook:
                 if link_imagen_tag:
                     a_link_href = link_imagen_tag[0].get("href")
                     link = "https://www.facebook.com" + a_link_href
-                    link_domain = "facebook.com"
                     posts[0] = "imagen"
                 else:
                     link_imagen_tag = self.html_bs.find_all(
@@ -155,7 +122,6 @@ class PostFacebook:
                     if link_imagen_tag:
                         a_link_href = link_imagen_tag[0].get("href")
                         link = "https://www.facebook.com" + a_link_href
-                        link_domain = "facebook.com"
                         posts[0] = "imagen"
                     else:
                         link_imagen_tag = self.html_bs.find_all(
@@ -164,7 +130,6 @@ class PostFacebook:
                         if link_imagen_tag:
                             a_link_href = link_imagen_tag[0].get("href")
                             link = "https://www.facebook.com" + a_link_href
-                            link_domain = "facebook.com"
                             posts[0] = "imagen"
                         else:
                             cabecera_span_tag = self.html_bs.find_all(
@@ -173,18 +138,6 @@ class PostFacebook:
                             for span in cabecera_span_tag:
                                 if "encuesta" in str(span):
                                     posts[0] = "encuesta"
-                                    poll_tag = self.html_bs.find_all(
-                                        "div", {"class": "_204q"}
-                                    )
-                                    if poll_tag:
-                                        poll_count_text = (
-                                            poll_tag[0].getText().replace("votos", "")
-                                        )
-                                        poll_count = (
-                                            self.fbStringToNumber.convertStringToNumber(
-                                                poll_count_text
-                                            )
-                                        )
                                     break
         # link
         posts.append(link)
@@ -199,7 +152,6 @@ class PostFacebook:
         ) = self.getPostDate()
         # post_published
         posts.append(post_published_str)
-
 
         (
             like_count_fb,
@@ -472,10 +424,10 @@ class PostFacebook:
             )
             div = divs[0]
             CLASS_NAME_COMMENTS_DIV = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of n00je7tq arfg74bv qs9ysxi8 k77z8yql l9j0dhe7 abiwlrkh p8dawk7l lzcic4wl gmql0nx0 j83agx80 ni8dbmo4 stjgntxs"
-            div_comments = div.find_element_by_xpath(f".//div[@class='{CLASS_NAME_COMMENTS_DIV}']")
-            amount = fbStringToNumber.convertStringToNumber(
-                div_comments.text
+            div_comments = div.find_element_by_xpath(
+                f".//div[@class='{CLASS_NAME_COMMENTS_DIV}']"
             )
+            amount = fbStringToNumber.convertStringToNumber(div_comments.text)
             return amount
 
         CLASS_NAME = "gpro0wi8 pcp91wgn"
@@ -613,7 +565,6 @@ class PostFacebook:
                 sleep(1)
                 break
 
-
     def getPostMessage(self):
         # TODO: this function is not capable of extracting emojis
         post_message = ""
@@ -622,9 +573,7 @@ class PostFacebook:
 
             self.click_to_see_full_text()
 
-            CLASS_NAME_OPTION_0 = (
-                "e5nlhep0 nu4hu5il eg9m0zos"
-            )
+            CLASS_NAME_OPTION_0 = "e5nlhep0 nu4hu5il eg9m0zos"
             CLASS_NAME_OPTION_1 = "e5nlhep0"
             try:
                 div = self.fb_login.find_element_by_xpath(
@@ -695,7 +644,9 @@ class PostFacebook:
             div = divs[0]
 
             CLASS_NAME_DIV = "stjgntxs ni8dbmo4 bkfpd7mw buofh1pr j83agx80 bp9cbjyn"
-            div_reactions = div.find_element_by_xpath(f".//div[@class='{CLASS_NAME_DIV}']")
+            div_reactions = div.find_element_by_xpath(
+                f".//div[@class='{CLASS_NAME_DIV}']"
+            )
             div_reactions.click()
 
         TEXT_DISPLAYED = "Consulta quién reaccionó a esto"

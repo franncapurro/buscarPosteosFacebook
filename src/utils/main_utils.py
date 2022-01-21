@@ -1,10 +1,13 @@
 import enum
+import os
 import sys
 import traceback
-import os
 from time import sleep
 from typing import List, Tuple
 
+import post_facebook
+from config_manager import ConfigManager
+from output_data_set_csv import OuputDataSetCSV
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
@@ -13,10 +16,6 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.remote import webelement
 from termcolor import colored
 from webdriver_manager.firefox import GeckoDriverManager
-
-from config_manager import ConfigManager
-import post_facebook
-from output_data_set_csv import OuputDataSetCSV
 
 FACEBOOK_LOGIN = "https://www.facebook.com/login/"
 COLUMNS = [
@@ -59,6 +58,7 @@ def delete_duplicates(posts_links):
 def remove_temp_files(temp_filenames):
     for temp_fn in temp_filenames:
         os.remove(temp_fn)
+
 
 def initialize_web_driver(firefox_path):
     """
