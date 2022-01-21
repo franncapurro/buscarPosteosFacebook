@@ -16,7 +16,6 @@
 #    along with buscarTitulosFacebook; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-import csv
 from typing import Any, List
 
 import pandas as pd
@@ -33,16 +32,6 @@ class OuputDataSetCSV:
 
     def save(self) -> None:
         df = pd.DataFrame(data=self.dataset, columns=self.columns)
-        # df.to_csv(
-        #     self.outputFileName,
-        #     index=False,
-        #     columns=self.columns,
-        #     sep=";",
-        #     quoting=csv.QUOTE_ALL,
-        #     doublequote=True,
-        #     quotechar='"',
-        #     encoding="utf-8",
-        # )
         df.to_excel(
             self.outputFileName.replace(".csv", "") + ".xlsx",
             index=False,

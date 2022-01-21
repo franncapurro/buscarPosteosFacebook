@@ -1,7 +1,7 @@
 {
   "FileStorageConfig": [
     {
-      "base_path": "data",
+      "base_path": "C:\\Users\\frann\\Accesos\\Varios\\buscarPosteosFacebook\\",
       "input_filename": "ln_posts_input.csv",
       "output_filename": "ln_posts_output",
       "output_post_filename": "ln_posts_"
@@ -10,21 +10,15 @@
   "WebDriver" : 
   [
     {
-      "gecko_binary" : "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
-      "gecko_driver_exe" : "C:\\geckodriver.exe",
-      "gecko_headless" : false
+      "gecko_binary" : "C:\\Program Files\\Mozilla Firefox\\firefox.exe"
     }
   ],
   "facebook": [
     {
-      "user": "fb@mail.com",
-      "password": "fbpassword",
-      "avcode" : "1471326946", 
-      "amount_posts" : 20,
-      "shares_per_page" : 5,
-      "page_name" : "La Nacion",
-      "search_year" : "2017",
-      "search_month" : "3"
+      "user": "user@mail.com",
+      "password": "pass",
+      "amount_posts" : 5,
+      "page_name" : "La Nacion"
     }
   ]
 }

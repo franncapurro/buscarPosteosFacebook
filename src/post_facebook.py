@@ -34,8 +34,8 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.keys import Keys
 from termcolor import colored
 
-from FacebookStringToNumber import FacebookStringToNumber
-from TextOutputFile import TextOutputFile
+from facebook_string_to_number import FacebookStringToNumber
+from text_output_file import TextOutputFile
 
 
 class PostFacebook:
@@ -107,14 +107,6 @@ class PostFacebook:
         post_message = self.getPostMessage()
         # post_message
         posts.append(post_message)
-
-        # # picture
-        # picture = self.getPicture()
-        # posts.append(picture)
-
-        # # full_picture
-        # full_picture, post_picture_descripcion = self.getFullPicture()
-        # posts.append(full_picture)
 
         link = ""
         link_domain = ""
@@ -207,12 +199,7 @@ class PostFacebook:
         ) = self.getPostDate()
         # post_published
         posts.append(post_published_str)
-        # # post_published_unix
-        # posts.append(post_published_unix)
-        # # post_published_sql
-        # posts.append(post_published_sql)
-        # # post_hora_argentina
-        # posts.append(post_date_argentina)
+
 
         (
             like_count_fb,
@@ -261,41 +248,6 @@ class PostFacebook:
         # rea_CARE
         posts.append(rea_CARE)
 
-        # posts.append(post_picture_descripcion)
-        # posts.append(poll_count)
-
-        # titulo = self.getTituloLink()
-        # subtitulo_post = "" #no existe mas este dato
-        # # titulo_link
-        # posts.append(titulo)
-        # # subtitulo_link
-        # posts.append(subtitulo_post)
-
-        # mencionesLista, hashtagsLista = self.getMencionesHashtags()
-        # # menciones
-        # posts.append(mencionesLista)
-        # # hashtags
-        # posts.append(hashtagsLista)
-
-        # video_plays_count = self.getVideosPlaysCount(self.fbStringToNumber)
-        # # video_plays_count
-        # posts.append(video_plays_count)
-
-        # fb_action_tags_text = self.getFBActionTagsText()
-        # # fb_action_tags_text
-        # posts.append(fb_action_tags_text)
-
-        # has_emoji = self.getHasEmoji()
-        # # has_emoji
-        # posts.append(has_emoji)
-
-        # tiene_hashtags = self.getTieneHashtags(hashtagsLista)
-        # # tiene_hashtags
-        # posts.append(tiene_hashtags)
-
-        # tiene_menciones = self.getTieneHashtags(mencionesLista)
-        # # tiene_menciones
-        # posts.append(tiene_menciones)
         return posts
 
     def getPostDate(self):
@@ -754,7 +706,6 @@ class PostFacebook:
                 return True
             except ElementClickInterceptedException:
                 continue
-        print(colored(f"ERROR: button {TEXT_DISPLAYED} not found", "red"))
         return False
 
     def get_divs_for_main_reactions(self):
