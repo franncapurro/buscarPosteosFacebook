@@ -99,16 +99,6 @@ def login_to_facebook(driver, username, password):
     return driver
 
 
-def get_program_parameters():
-    posts_source = sys.argv[1]
-    page_name = None
-    amount = None
-    if posts_source == PostsSource.public_page.value:
-        page_name = sys.argv[2]
-        amount = int(sys.argv[3])
-    return posts_source, page_name, amount
-
-
 def export_netvizz_csv(
     config: ConfigManager,
     posts_links: List[Tuple[str, webelement.WebElement]],

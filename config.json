@@ -1,7 +1,7 @@
 {
   "FileStorageConfig": [
     {
-      "base_path": "C:\\Users\\frann\\Accesos\\Varios\\buscarPosteosFacebook\\",
+      "base_path": "C:\\",
       "input_filename": "ln_posts_input.csv",
       "output_filename": "ln_posts_output",
       "output_post_filename": "ln_posts_"
@@ -16,9 +16,7 @@
   "facebook": [
     {
       "user": "user@mail.com",
-      "password": "pass",
-      "amount_posts" : 5,
-      "page_name" : "La Nacion"
+      "password": "pass"
     }
   ]
 }

@@ -1,6 +1,7 @@
 astroid==2.4.2
 beautifulsoup4==4.9.1
 bs4==0.0.1
+click==8.0.3
 isort==4.3.21
 lazy-object-proxy==1.4.3
 lxml==4.5.2
@@ -13,8 +14,8 @@ pytz==2020.1
 selenium==3.141.0
 six==1.15.0
 soupsieve==2.0.1
+termcolor==1.1.0
 toml==0.10.1
 urllib3==1.25.10
 webdriver-manager==3.5.2
 wrapt==1.12.1
-termcolor==1.1.0

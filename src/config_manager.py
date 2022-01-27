@@ -7,10 +7,8 @@ class ConfigManager:
     def __init__(self):
         self.fb_username = None
         self.fb_password = None
-        self.fb_page_name = None
         self.output_filename = None
         self.output_post_filename_prefix = None
-        self.amount_posts = None
         self.gecko_binary = None
         self.load_config_data()
 
@@ -20,8 +18,6 @@ class ConfigManager:
             fbSection = filecontents["facebook"][0]
             self.fb_username = fbSection["user"]
             self.fb_password = fbSection["password"]
-            self.amount_posts = fbSection["amount_posts"]
-            self.fb_page_name = fbSection["page_name"]
 
             fsWebDriver = filecontents["WebDriver"][0]
             self.gecko_binary = fsWebDriver["gecko_binary"]
