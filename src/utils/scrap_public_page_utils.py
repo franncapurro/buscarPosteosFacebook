@@ -1,11 +1,15 @@
+from datetime import datetime
 from time import sleep
+import locale
 
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from termcolor import colored
 
 
-def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int):
+def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int, since=None, until=None):
     # Assume 4 new posts per scrolldown, do at least 1
     amount_scrolls = amount_posts // 4 + 1
     body = driver.find_element_by_xpath("//body")
@@ -18,8 +22,25 @@ def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int):
         sleep(2)
         if len(post_links) >= amount_posts:
             post_links = post_links[:amount_posts]
-            return driver, post_links
-    return driver, post_links
+            break
+
+    errors = []
+    if since or until:
+        filtered = []
+        for link_date in post_links:
+            link, date = link_date
+            if date:
+                if since and until:
+                    if date >= since and date <= until:
+                        filtered.append((link, date))
+                elif since and until is None:
+                    if date >= since:
+                        filtered.append((link, date))
+            else:
+                errors.append(link)
+        post_links = filtered
+
+    return driver, post_links, errors
 
 
 def clean_href(href: str) -> str:
@@ -27,6 +48,60 @@ def clean_href(href: str) -> str:
     if "?" in href:
         cleaned = href.split("?")[0]
     return cleaned
+
+
+def reveal_and_get_publication_date(driver, a_block):
+    # This is to parse the names of the days and months in Spanish
+    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    # Hover mouse over to reveal publication date
+    a = ActionChains(driver)
+    a.move_to_element(a_block).perform()
+    # Time necessary for the popup to be displayed
+    sleep(3)
+    specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
+
+    correct_amount_found = True
+    is_a_date = True
+    try:
+        pub_date_text = specific_date_blocks[2].text
+        pub_date = datetime.strptime(pub_date_text, "%A, %d de %B de %Y a las %H:%M")
+    except IndexError:
+        correct_amount_found = False
+    except ValueError:
+        is_a_date = False
+
+    # If this isn't at least 3, then the popup did not displayed correctly
+    # try once again but first scroll up the view a bit to fix it
+    # also, check the text retrieved is actually a date
+    while not(correct_amount_found) or not(is_a_date):
+        print(colored("Warning: ", "red"), "Retrying to obtain specific publication date.")
+        # Center block
+        driver.execute_script("arguments[0].scrollIntoView();", a_block)
+        a_block.send_keys(Keys.ESCAPE)
+        a_block.send_keys(Keys.ARROW_DOWN)
+        # Hover mouse over to reveal publication date
+        a.move_to_element(a_block).perform()
+        # Time necessary for the popup to be displayed
+        sleep(3)
+        specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
+        try:
+            pub_date_text = specific_date_blocks[2].text
+            correct_amount_found = True
+            pub_date = datetime.strptime(pub_date_text, "%A, %d de %B de %Y a las %H:%M")
+            is_a_date = True
+        except IndexError:
+            correct_amount_found = False
+        except ValueError:
+            is_a_date = False
+            print(colored("Error: ", "red"), "Publication date could not be obtained.")
+            return None
+
+    # Reset locale to the default
+    locale.setlocale(locale.LC_TIME, '')
+    # Deselect anything
+    a_block.send_keys(Keys.ESCAPE)
+    
+    return pub_date
 
 
 def reveal_post_links(driver, public_page_id):
@@ -41,9 +116,11 @@ def reveal_post_links(driver, public_page_id):
             if "#" in unreveald_link:
                 if a_block.is_displayed():
                     a_block.click()
+                    pub_date = reveal_and_get_publication_date(driver, a_block)
+                    print(pub_date)
                 revealed_link = a_block.get_attribute("href")
                 cleaned_link = clean_href(revealed_link)
-                hrefs.append(cleaned_link)
+                hrefs.append((cleaned_link, pub_date))
                 sleep(2)
     return hrefs
 

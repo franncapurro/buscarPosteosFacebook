@@ -58,12 +58,16 @@ def scrap_public_page(driver, config, public_page, amount, since, until):
     driver = access_to_public_page(driver, public_page)
     # Time necessary for the page to be fully loaded
     sleep(5)
-    driver, post_links = scroll_down_to_reveal_posts(driver, public_page, amount)
+    driver, post_links, errors = scroll_down_to_reveal_posts(driver, public_page, amount, since, until)
     posts_links_to_scrap = list(zip_longest(post_links, []))
+    print(posts_links_to_scrap[0])
 
     temp_filenames = export_netvizz_csv(config, posts_links_to_scrap)
     for temp_fn in temp_filenames:
         os.remove(temp_fn)
+    
+    for error in errors:
+        print(error)
 
 
 @click.command()
