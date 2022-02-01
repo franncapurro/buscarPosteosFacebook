@@ -109,10 +109,10 @@ def export_netvizz_csv(
     fb_login = login_to_facebook(driver, config.fb_username, config.fb_password)
 
     temp_filenames = []
-    for post_link, html_preview in posts_links:
-        print(colored(f"Parsing post with url {post_link}", "green"))
+    for post_link_w_date, html_preview in posts_links:
+        print(colored(f"Parsing post with url {post_link_w_date[0]}", "green"))
         try:
-            post = post_facebook.PostFacebook(post_link, fb_login, html_preview)
+            post = post_facebook.PostFacebook(post_link_w_date[0], fb_login, html_preview)
             fn = post.save_html(config.base_path)
             posts = post.parse_post_html()
             posts_fb.append(posts)

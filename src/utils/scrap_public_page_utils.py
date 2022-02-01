@@ -9,38 +9,39 @@ from selenium.webdriver.common.keys import Keys
 from termcolor import colored
 
 
-def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int, since=None, until=None):
-    # Assume 4 new posts per scrolldown, do at least 1
-    amount_scrolls = amount_posts // 4 + 1
+def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int=None, since=None, until=None):
     body = driver.find_element_by_xpath("//body")
     post_links = []
-    for _ in range(0, amount_scrolls):
-        found_links = reveal_post_links(driver, public_page_id)
-        post_links.extend(found_links)
-        body.send_keys(Keys.CONTROL + Keys.END)
-        # Time needed for the new posts to be fully loaded
-        sleep(2)
-        if len(post_links) >= amount_posts:
-            post_links = post_links[:amount_posts]
-            break
+    unknown = []
+    # case in which it's requested to scrap publications after certain date 'since'
+    if since:
+        last_datetime_obtained = datetime.now()
+        while last_datetime_obtained >= since:
+            found_links, unknown_pub_date = reveal_post_links(driver, public_page_id)
+            post_links.extend(found_links)
+            unknown.extend(unknown_pub_date)
+            last_datetime_obtained = post_links[-1][1]
+            body.send_keys(Keys.CONTROL + Keys.END)
+            # Time needed for the new posts to be fully loaded
+            sleep(2)
+            if amount_posts and len(post_links) >= amount_posts:
+                post_links = post_links[:amount_posts]
+                break
+    elif since is None and amount_posts:
+        # Assume 4 new posts per scrolldown, do at least 1
+        amount_scrolls = amount_posts // 4 + 1
+        for _ in range(0, amount_scrolls):
+            found_links, unknown_pub_date = reveal_post_links(driver, public_page_id)
+            post_links.extend(found_links)
+            unknown.extend(unknown_pub_date)
+            body.send_keys(Keys.CONTROL + Keys.END)
+            # Time needed for the new posts to be fully loaded
+            sleep(2)
+            if len(post_links) >= amount_posts:
+                post_links = post_links[:amount_posts]
+                break
 
-    errors = []
-    if since or until:
-        filtered = []
-        for link_date in post_links:
-            link, date = link_date
-            if date:
-                if since and until:
-                    if date >= since and date <= until:
-                        filtered.append((link, date))
-                elif since and until is None:
-                    if date >= since:
-                        filtered.append((link, date))
-            else:
-                errors.append(link)
-        post_links = filtered
-
-    return driver, post_links, errors
+    return driver, post_links, unknown
 
 
 def clean_href(href: str) -> str:
@@ -52,7 +53,7 @@ def clean_href(href: str) -> str:
 
 def reveal_and_get_publication_date(driver, a_block):
     # This is to parse the names of the days and months in Spanish
-    locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    locale.setlocale(locale.LC_ALL, 'esp_esp')
     # Hover mouse over to reveal publication date
     a = ActionChains(driver)
     a.move_to_element(a_block).perform()
@@ -60,40 +61,23 @@ def reveal_and_get_publication_date(driver, a_block):
     sleep(3)
     specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
 
-    correct_amount_found = True
-    is_a_date = True
     try:
         pub_date_text = specific_date_blocks[2].text
         pub_date = datetime.strptime(pub_date_text, "%A, %d de %B de %Y a las %H:%M")
-    except IndexError:
-        correct_amount_found = False
-    except ValueError:
-        is_a_date = False
-
-    # If this isn't at least 3, then the popup did not displayed correctly
-    # try once again but first scroll up the view a bit to fix it
-    # also, check the text retrieved is actually a date
-    while not(correct_amount_found) or not(is_a_date):
-        print(colored("Warning: ", "red"), "Retrying to obtain specific publication date.")
-        # Center block
-        driver.execute_script("arguments[0].scrollIntoView();", a_block)
-        a_block.send_keys(Keys.ESCAPE)
+    except (IndexError, ValueError):
         a_block.send_keys(Keys.ARROW_DOWN)
-        # Hover mouse over to reveal publication date
-        a.move_to_element(a_block).perform()
+        sleep(0.1)
+        a_block.send_keys(Keys.ARROW_DOWN)
+        sleep(0.1)
+        a_block.send_keys(Keys.ARROW_DOWN)
         # Time necessary for the popup to be displayed
         sleep(3)
         specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
         try:
             pub_date_text = specific_date_blocks[2].text
-            correct_amount_found = True
             pub_date = datetime.strptime(pub_date_text, "%A, %d de %B de %Y a las %H:%M")
-            is_a_date = True
-        except IndexError:
-            correct_amount_found = False
-        except ValueError:
-            is_a_date = False
-            print(colored("Error: ", "red"), "Publication date could not be obtained.")
+        except (IndexError, ValueError):
+            print("Error:  Publication date could not be obtained.")
             return None
 
     # Reset locale to the default
@@ -110,6 +94,7 @@ def reveal_post_links(driver, public_page_id):
     a_blocks = driver.find_elements(By.XPATH, f"//a[@class='{CLASS_NAME_FIND_LINK}']")
     url = build_public_page_url(public_page_id)
     hrefs = []
+    unknown_pub_date = []
     for a_block in a_blocks:
         unreveald_link = a_block.get_attribute("href")
         if url in unreveald_link:
@@ -120,9 +105,12 @@ def reveal_post_links(driver, public_page_id):
                     print(pub_date)
                 revealed_link = a_block.get_attribute("href")
                 cleaned_link = clean_href(revealed_link)
-                hrefs.append((cleaned_link, pub_date))
+                if pub_date is None:
+                    unknown_pub_date.append(cleaned_link)
+                else:
+                    hrefs.append((cleaned_link, pub_date))
                 sleep(2)
-    return hrefs
+    return hrefs, unknown_pub_date
 
 
 def build_public_page_url(public_page_id: str) -> str:
