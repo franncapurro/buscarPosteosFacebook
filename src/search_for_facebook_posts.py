@@ -61,7 +61,6 @@ def scrap_public_page(driver, config, public_page, amount, since, until):
     sleep(5)
     driver, post_links, unknown_dates = scroll_down_to_reveal_posts(driver, public_page, amount, since, until)
     posts_links_to_scrap = list(zip_longest(post_links, []))
-    print(posts_links_to_scrap[0])
 
     temp_filenames = export_netvizz_csv(config, posts_links_to_scrap)
     for temp_fn in temp_filenames:

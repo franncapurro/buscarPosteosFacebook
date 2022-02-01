@@ -114,7 +114,7 @@ def export_netvizz_csv(
         try:
             post = post_facebook.PostFacebook(post_link_w_date[0], fb_login, html_preview)
             fn = post.save_html(config.base_path)
-            posts = post.parse_post_html()
+            posts = post.parse_post_html(publication_date=post_link_w_date[1])
             posts_fb.append(posts)
             temp_filenames.append(fn)
             sleep(10)

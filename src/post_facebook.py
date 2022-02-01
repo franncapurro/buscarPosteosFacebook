@@ -63,7 +63,7 @@ class PostFacebook:
         text_output_file.save(f"file_{hash_object.hexdigest()}")
         return f"file_{hash_object.hexdigest()}"
 
-    def parse_post_html(self):
+    def parse_post_html(self, publication_date):
         posts = []
 
         page_name = self.get_page_name()
@@ -143,15 +143,19 @@ class PostFacebook:
         posts.append(link)
         # posts.append(link_domain)
 
-        # post_published
-        (
-            post_published_str,
-            post_published_unix,
-            post_published_sql,
-            post_date_argentina,
-        ) = self.get_post_date()
-        # post_published
-        posts.append(post_published_str)
+        if publication_date is None:
+            # post_published
+            (
+                post_published_str,
+                post_published_unix,
+                post_published_sql,
+                post_date_argentina,
+            ) = self.get_post_date()
+            # post_published
+            posts.append(post_published_str)
+        else:
+            post_date = publication_date.strftime("%d/%m/%Y %H:%M:%S")
+            posts.append(post_date)
 
         (
             like_count_fb,

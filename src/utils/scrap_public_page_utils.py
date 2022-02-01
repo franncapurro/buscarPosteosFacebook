@@ -1,4 +1,5 @@
 from datetime import datetime
+from multiprocessing.sharedctypes import Value
 from time import sleep
 import locale
 
@@ -51,6 +52,17 @@ def clean_href(href: str) -> str:
     return cleaned
 
 
+def find_publication_date(div_elements):
+    for div in div_elements:
+        pub_date_text = div.text
+        try:
+            pub_date = datetime.strptime(pub_date_text, "%A, %d de %B de %Y a las %H:%M")
+            return pub_date
+        except ValueError:
+            continue
+    return None
+
+
 def reveal_and_get_publication_date(driver, a_block):
     # This is to parse the names of the days and months in Spanish
     locale.setlocale(locale.LC_ALL, 'esp_esp')
@@ -61,10 +73,8 @@ def reveal_and_get_publication_date(driver, a_block):
     sleep(3)
     specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
 
-    try:
-        pub_date_text = specific_date_blocks[2].text
-        pub_date = datetime.strptime(pub_date_text, "%A, %d de %B de %Y a las %H:%M")
-    except (IndexError, ValueError):
+    pub_date = find_publication_date(specific_date_blocks)
+    if pub_date is None:
         a_block.send_keys(Keys.ARROW_DOWN)
         sleep(0.1)
         a_block.send_keys(Keys.ARROW_DOWN)
@@ -73,12 +83,9 @@ def reveal_and_get_publication_date(driver, a_block):
         # Time necessary for the popup to be displayed
         sleep(3)
         specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
-        try:
-            pub_date_text = specific_date_blocks[2].text
-            pub_date = datetime.strptime(pub_date_text, "%A, %d de %B de %Y a las %H:%M")
-        except (IndexError, ValueError):
+        pub_date = find_publication_date(specific_date_blocks)
+        if pub_date is None:
             print("Error:  Publication date could not be obtained.")
-            return None
 
     # Reset locale to the default
     locale.setlocale(locale.LC_TIME, '')
