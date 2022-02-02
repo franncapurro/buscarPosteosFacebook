@@ -2,6 +2,7 @@ from datetime import datetime
 from multiprocessing.sharedctypes import Value
 from time import sleep
 import locale
+import platform
 
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -65,7 +66,10 @@ def find_publication_date(div_elements):
 
 def reveal_and_get_publication_date(driver, a_block):
     # This is to parse the names of the days and months in Spanish
-    locale.setlocale(locale.LC_ALL, 'esp_esp')
+    if platform.system() != "Darwin":
+        locale.setlocale(locale.LC_TIME, "es_AR")
+    else:
+        locale.setlocale(locale.LC_ALL, 'es_ES')
     # Hover mouse over to reveal publication date
     a = ActionChains(driver)
     a.move_to_element(a_block).perform()

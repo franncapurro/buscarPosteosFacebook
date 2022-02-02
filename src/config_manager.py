@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 from datetime import datetime
 
 
@@ -23,7 +24,10 @@ class ConfigManager:
             self.gecko_binary = fsWebDriver["gecko_binary"]
 
             fsSection = filecontents["FileStorageConfig"][0]
-            self.base_path = fsSection["base_path"]
+            if platform.system() != "Darwin":
+                self.base_path = fsSection["base_path"]
+            else:
+                self.base_path = "."
             input_filename_prefix = fsSection["input_filename"]
             self.input_filename = os.path.join(self.base_path, input_filename_prefix)
             output_filename_prefix = fsSection["output_filename"]

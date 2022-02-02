@@ -1,6 +1,7 @@
 import hashlib
 import locale
 import os
+import platform
 import urllib.request
 from datetime import datetime, timedelta
 from time import sleep
@@ -216,7 +217,10 @@ class PostFacebook:
         8 h
         Hace un momento
         """
-        locale.setlocale(locale.LC_TIME, "es_AR")
+        if platform.system() != "Darwin":
+            locale.setlocale(locale.LC_TIME, "es_AR")
+        else:
+            locale.setlocale(locale.LC_ALL, 'es_ES')
         a_date = self.html_bs.find_all(
             "a",
             {

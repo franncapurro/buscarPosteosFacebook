@@ -1,5 +1,6 @@
 import enum
 import os
+import platform
 import sys
 import traceback
 from time import sleep
@@ -69,7 +70,9 @@ def initialize_web_driver(firefox_path):
     """
     f_options = Options()
     f_options.add_argument("--disable-notifications")
-    f_options.binary_location = firefox_path
+    if platform.system() != "Darwin":
+        # this config needs to be skipped when running on MacOS
+        f_options.binary_location = firefox_path
 
     f_prof = FirefoxProfile()
     f_prof.set_preference("dom.webnotifications.enabled", False)
