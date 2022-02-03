@@ -11,6 +11,23 @@ from selenium.webdriver.common.keys import Keys
 from termcolor import colored
 
 
+def remove_extras(post_links, since, until):
+    result = post_links
+    if since:
+        for index, post_link in enumerate(result):
+            publication_date = post_link[1]
+            if publication_date < since:
+                result = result[:index]
+                break
+    if until:
+        for index in range(len(result)-1, -1, -1):
+            post_link = result[index]
+            publication_date = post_link[1]
+            if publication_date >= until:
+                result = result[index + 1:]
+                break
+    return result
+
 def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int=None, since=None, until=None):
     body = driver.find_element_by_xpath("//body")
     post_links = []
@@ -19,7 +36,7 @@ def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int=N
     if since:
         last_datetime_obtained = datetime.now()
         while last_datetime_obtained >= since:
-            found_links, unknown_pub_date = reveal_post_links(driver, public_page_id)
+            found_links, unknown_pub_date, completed = reveal_post_links(driver, public_page_id, since)
             post_links.extend(found_links)
             unknown.extend(unknown_pub_date)
             last_datetime_obtained = post_links[-1][1]
@@ -29,11 +46,13 @@ def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int=N
             if amount_posts and len(post_links) >= amount_posts:
                 post_links = post_links[:amount_posts]
                 break
+            if completed:
+                break
     elif since is None and amount_posts:
         # Assume 4 new posts per scrolldown, do at least 1
         amount_scrolls = amount_posts // 4 + 1
         for _ in range(0, amount_scrolls):
-            found_links, unknown_pub_date = reveal_post_links(driver, public_page_id)
+            found_links, unknown_pub_date, completed = reveal_post_links(driver, public_page_id, since)
             post_links.extend(found_links)
             unknown.extend(unknown_pub_date)
             body.send_keys(Keys.CONTROL + Keys.END)
@@ -42,8 +61,16 @@ def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int=N
             if len(post_links) >= amount_posts:
                 post_links = post_links[:amount_posts]
                 break
+            if completed:
+                break
+    post_links_filtered = remove_extras(post_links, since, until)
 
-    return driver, post_links, unknown
+    print(len(post_links))
+    print(len(post_links_filtered))
+    for elem in post_links:
+        print(elem[0])
+
+    return driver, post_links_filtered, unknown
 
 
 def clean_href(href: str) -> str:
@@ -74,7 +101,7 @@ def reveal_and_get_publication_date(driver, a_block):
     a = ActionChains(driver)
     a.move_to_element(a_block).perform()
     # Time necessary for the popup to be displayed
-    sleep(3)
+    sleep(2)
     specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
 
     pub_date = find_publication_date(specific_date_blocks)
@@ -85,7 +112,7 @@ def reveal_and_get_publication_date(driver, a_block):
         sleep(0.1)
         a_block.send_keys(Keys.ARROW_DOWN)
         # Time necessary for the popup to be displayed
-        sleep(3)
+        sleep(2)
         specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
         pub_date = find_publication_date(specific_date_blocks)
         if pub_date is None:
@@ -99,7 +126,7 @@ def reveal_and_get_publication_date(driver, a_block):
     return pub_date
 
 
-def reveal_post_links(driver, public_page_id):
+def reveal_post_links(driver, public_page_id, since):
     # This a class name that's used to find specific URLs to the posts
     CLASS_NAME_FIND_LINK = "oajrlxb2 g5ia77u1 qu0x051f esr5mh6w e9989ue4 r7d6kgcz rq0escxv nhd2j8a9 nc684nl6 p7hjln8o kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x jb3vyjys rz4wbd8a qt6c0cv9 a8nywdso i1ao9s8h esuyzwwr f1sip0of lzcic4wl gmql0nx0 gpro0wi8 b1v8xokw"
     a_blocks = driver.find_elements(By.XPATH, f"//a[@class='{CLASS_NAME_FIND_LINK}']")
@@ -110,6 +137,7 @@ def reveal_post_links(driver, public_page_id):
         unreveald_link = a_block.get_attribute("href")
         if url in unreveald_link:
             if "#" in unreveald_link:
+                pub_date = None
                 if a_block.is_displayed():
                     a_block.click()
                     pub_date = reveal_and_get_publication_date(driver, a_block)
@@ -119,9 +147,11 @@ def reveal_post_links(driver, public_page_id):
                 if pub_date is None:
                     unknown_pub_date.append(cleaned_link)
                 else:
+                    if pub_date < since:
+                        return hrefs, unknown_pub_date, True
                     hrefs.append((cleaned_link, pub_date))
-                sleep(2)
-    return hrefs, unknown_pub_date
+                sleep(0.5)
+    return hrefs, unknown_pub_date, False
 
 
 def build_public_page_url(public_page_id: str) -> str:
