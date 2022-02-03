@@ -43,9 +43,6 @@ def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int=N
             body.send_keys(Keys.CONTROL + Keys.END)
             # Time needed for the new posts to be fully loaded
             sleep(2)
-            if amount_posts and len(post_links) >= amount_posts:
-                post_links = post_links[:amount_posts]
-                break
             if completed:
                 break
     elif since is None and amount_posts:
@@ -59,17 +56,15 @@ def scroll_down_to_reveal_posts(driver, public_page_id: str, amount_posts: int=N
             # Time needed for the new posts to be fully loaded
             sleep(2)
             if len(post_links) >= amount_posts:
-                post_links = post_links[:amount_posts]
                 break
             if completed:
                 break
     post_links_filtered = remove_extras(post_links, since, until)
-
-    print(len(post_links))
-    print(len(post_links_filtered))
-    for elem in post_links:
-        print(elem[0])
-
+    if since is None and until is None:
+        post_links_filtered.extend(unknown)
+    if amount_posts:
+        # last 'amount_posts' posts in the list
+        post_links_filtered = post_links_filtered[-amount_posts:]
     return driver, post_links_filtered, unknown
 
 
@@ -145,9 +140,9 @@ def reveal_post_links(driver, public_page_id, since):
                 revealed_link = a_block.get_attribute("href")
                 cleaned_link = clean_href(revealed_link)
                 if pub_date is None:
-                    unknown_pub_date.append(cleaned_link)
+                    unknown_pub_date.append((cleaned_link, pub_date))
                 else:
-                    if pub_date < since:
+                    if since and pub_date < since:
                         return hrefs, unknown_pub_date, True
                     hrefs.append((cleaned_link, pub_date))
                 sleep(0.5)

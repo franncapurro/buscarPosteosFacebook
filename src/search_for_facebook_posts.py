@@ -18,7 +18,7 @@
 
 import os
 from itertools import zip_longest
-from time import sleep
+from time import sleep, time
 
 import click
 from termcolor import colored
@@ -61,13 +61,16 @@ def scrap_public_page(driver, config, public_page, amount, since, until):
     sleep(5)
     driver, post_links, unknown_dates = scroll_down_to_reveal_posts(driver, public_page, amount, since, until)
     posts_links_to_scrap = list(zip_longest(post_links, []))
+    unknown_dates_to_scrap = list(zip_longest(unknown_dates, []))
 
     temp_filenames = export_netvizz_csv(config, posts_links_to_scrap)
     for temp_fn in temp_filenames:
         os.remove(temp_fn)
     
-    for unk in unknown_dates:
-        print(colored("WARNING: ", "yellow"), f"{unk} has an unknown or imprecise publication date.")
+    if since or until:
+        temps = export_netvizz_csv(config, unknown_dates_to_scrap, custom_filename="imprecise_unknown_date_pub.xlsx")
+        for t in temps:
+            os.remove(t)
 
 
 @click.command()
@@ -97,6 +100,8 @@ def main(source, word, amount, since, until):
     corresponding functions and, initialize the configuration and the web driver
     objects.
     """
+    start_time = time()
+
     config = ConfigManager()
     driver = initialize_web_driver(config.gecko_binary)
     driver = login_to_facebook(driver, config.fb_username, config.fb_password)
@@ -105,6 +110,8 @@ def main(source, word, amount, since, until):
         scrap_search_page(driver, config, word, amount, since, until)
     elif source == PostsSource.public_page.value:
         scrap_public_page(driver, config, word, amount, since, until)
+    
+    print("--- %s seconds ---" % (time() - start_time))
 
 
 if __name__ == "__main__":

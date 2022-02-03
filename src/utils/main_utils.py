@@ -1,7 +1,7 @@
+from datetime import datetime
 import enum
 import os
 import platform
-import sys
 import traceback
 from time import sleep
 from typing import List, Tuple
@@ -105,9 +105,10 @@ def login_to_facebook(driver, username, password):
 def export_netvizz_csv(
     config: ConfigManager,
     posts_links: List[Tuple[str, webelement.WebElement]],
-):
-
-    posts_fb = OuputDataSetCSV(config.output_filename, COLUMNS)
+    custom_filename=None):
+    if custom_filename is None:
+        custom_filename = os.path.join(".", "ln_posts_output" + "_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".xlsx")
+    posts_fb = OuputDataSetCSV(custom_filename, COLUMNS)
     driver = initialize_web_driver(config.gecko_binary)
     fb_login = login_to_facebook(driver, config.fb_username, config.fb_password)
 
