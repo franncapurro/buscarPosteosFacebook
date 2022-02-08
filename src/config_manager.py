@@ -2,6 +2,7 @@ import json
 import os
 import platform
 from datetime import datetime
+from termcolor import colored
 
 
 class ConfigManager:
@@ -21,12 +22,19 @@ class ConfigManager:
             self.fb_password = fbSection["password"]
 
             fsWebDriver = filecontents["WebDriver"][0]
-            self.gecko_binary = fsWebDriver["gecko_binary"]
+            self.gecko_binary = fsWebDriver["firefox_windows_path"]
 
             fsSection = filecontents["FileStorageConfig"][0]
-            if platform.system() != "Darwin":
-                self.base_path = fsSection["base_path"]
+            if platform.system() == "Windows":
+                self.base_path = ".\\"
+            elif platform.system() in ["Darwin", "Linux"]:
+                self.base_path = "."
             else:
+                print(
+                    colored(
+                        f"Warning: system platform could not be identified. "
+                    )
+                )
                 self.base_path = "."
             input_filename_prefix = fsSection["input_filename"]
             self.input_filename = os.path.join(self.base_path, input_filename_prefix)

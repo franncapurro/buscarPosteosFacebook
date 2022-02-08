@@ -88,10 +88,20 @@ def find_publication_date(div_elements):
 
 def reveal_and_get_publication_date(driver, a_block):
     # This is to parse the names of the days and months in Spanish
-    if platform.system() != "Darwin":
+    if platform.system() == "Windows":
         locale.setlocale(locale.LC_TIME, "es_AR")
-    else:
+    elif platform.system() == "Darwin":
         locale.setlocale(locale.LC_ALL, 'es_ES')
+    elif platform.system() == "Linux":
+        locale.setlocale(locale.LC_ALL, "es_AR.UTF-8")
+    else:
+        print(
+            colored(
+                f"Warning: system platform could not be identified. "
+                f"This could bring issues in the values of publication dates.",
+                "yellow"
+            )
+        )
     # Hover mouse over to reveal publication date
     a = ActionChains(driver)
     a.move_to_element(a_block).perform()
