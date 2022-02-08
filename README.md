@@ -31,19 +31,51 @@ Las opciones que se pueden configurar son:
 - output_filename: prefijo con el que se nombrará al archivo de salida del listado de posteos recuperado.
 - gecko_binary: Ruta al archivo exe del navegador Firefox.
 - user y password: Usuario y Contraseña de Facebook para el login.
-- page_name: en caso de que se desee obtener posts mediante la página de búsqueda, introducir acá el término a buscar.
-- amount_posts: en caso de que se desee obtener posts mediante la página de búsqueda, introducir acá la cantidad de posteos deseada.
 
 ## Ejecución
 
-Para realizar scrapping de posteos desde la búsqueda de Facebook:
+### Ejemplos
 
-```
-python .\src\search_for_facebook_posts.py search_page
+Para realizar scrapping de posteos desde la búsqueda de Facebook.
+
+```powershell
+python .\src\search_for_facebook_posts.py --source search_page --word 'palabras a buscar' --amount 10
 ```
 
 Para realizar scrapping de posteos desde una página de Facebook pública (una fanpage):
 
+```powershell
+python .\src\search_for_facebook_posts.py --source public_page --word 'LaVoz.com.ar' --amount 8
 ```
-python .\src\search_for_facebook_posts.py public_page id_de_la_pagina cantidad_de_posteos
+
+### Parámetros
+
+- `--source`: No es opcional. Se debe elegir entre `--source search_page`, para realizar scrapping desde la página de búsqueda, o `--source public_page`, para realizar scrapping desde una página pública.
+
+- `--word`: No es opcional. Si se eligió `--source search_page`, entonces este parámetro será el término de búsqueda. Si se eligió `--source public_page`, será el ID de la página pública.
+
+- `--since`: Es opcional, pero si no se indica entonces debe ser usado el parámetro `--amount`. Es la fecha a partir de la cual se desean obtener publicaciones (esto es, un límite inferior). Ejemplo: `--since 2022-01-23`.
+
+- `--until`: Es opcional, pero si no se indica entonces debe ser usado el parámetro `--amount`. Es la fecha hasta la cual se desean obtener publicaciones (esto es, un límite superior). Ejemplo: `--since 2022-01-25`.
+
+- `--amount`: Es opcional, pero si no se indica entonces debe ser usados los parámetros `--since` y `--until`. Es la cantidad de posts que se desean obtener.
+
+Los parámetros `--since`, `--until` y `--amount` pueden ser usados de manera combinada. Ejemplos:
+
+Obtener todas las publicaciones de la página pública de El Resaltador entre el día 2022-01-23 y el día 2022-01-25.
+
+```powershell
+python .\src\search_for_facebook_posts.py --source public_page --word 'ElResaltadorCba' --since 2022-01-25 --until 2022-01-25
 ```
+
+Obtener 8 publicaciones a partir del día 2022-01-25 de la página pública de La Voz del Interior.
+
+```powershell
+python .\src\search_for_facebook_posts.py --source public_page --word 'LaVoz.com.ar' --amount 8 --since 2022-01-25
+```
+
+## FAQs
+
+### ¿Cómo encuentro el ID de una página pública?
+
+Por ejemplo, al acceder a la página de La Voz del Interior vemos que su URL es `https://www.facebook.com/LaVoz.com.ar`, entonces su ID es `LaVoz.com.ar`.

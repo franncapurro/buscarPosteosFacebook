@@ -1,6 +1,7 @@
+from datetime import datetime
 import enum
 import os
-import sys
+import platform
 import traceback
 from time import sleep
 from typing import List, Tuple
@@ -69,7 +70,10 @@ def initialize_web_driver(firefox_path):
     """
     f_options = Options()
     f_options.add_argument("--disable-notifications")
-    f_options.binary_location = firefox_path
+
+    if platform.system() == "Windows":
+        # this config needs to be skipped when running on MacOS
+        f_options.binary_location = firefox_path
 
     f_prof = FirefoxProfile()
     f_prof.set_preference("dom.webnotifications.enabled", False)
@@ -99,32 +103,23 @@ def login_to_facebook(driver, username, password):
     return driver
 
 
-def get_program_parameters():
-    posts_source = sys.argv[1]
-    page_name = None
-    amount = None
-    if posts_source == PostsSource.public_page.value:
-        page_name = sys.argv[2]
-        amount = int(sys.argv[3])
-    return posts_source, page_name, amount
-
-
 def export_netvizz_csv(
     config: ConfigManager,
     posts_links: List[Tuple[str, webelement.WebElement]],
-):
-
-    posts_fb = OuputDataSetCSV(config.output_filename, COLUMNS)
+    custom_filename=None):
+    if custom_filename is None:
+        custom_filename = os.path.join(".", "ln_posts_output" + "_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".xlsx")
+    posts_fb = OuputDataSetCSV(custom_filename, COLUMNS)
     driver = initialize_web_driver(config.gecko_binary)
     fb_login = login_to_facebook(driver, config.fb_username, config.fb_password)
 
     temp_filenames = []
-    for post_link, html_preview in posts_links:
-        print(colored(f"Parsing post with url {post_link}", "green"))
+    for post_link_w_date, html_preview in posts_links:
+        print(colored(f"Parsing post with url {post_link_w_date[0]}", "green"))
         try:
-            post = post_facebook.PostFacebook(post_link, fb_login, html_preview)
+            post = post_facebook.PostFacebook(post_link_w_date[0], fb_login, html_preview)
             fn = post.save_html(config.base_path)
-            posts = post.parse_post_html()
+            posts = post.parse_post_html(publication_date=post_link_w_date[1])
             posts_fb.append(posts)
             temp_filenames.append(fn)
             sleep(10)
