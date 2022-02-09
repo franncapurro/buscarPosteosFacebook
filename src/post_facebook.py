@@ -217,10 +217,20 @@ class PostFacebook:
         8 h
         Hace un momento
         """
-        if platform.system() != "Darwin":
+        if platform.system() == "Windows":
             locale.setlocale(locale.LC_TIME, "es_AR")
-        else:
+        elif platform.system() == "Darwin":
             locale.setlocale(locale.LC_ALL, 'es_ES')
+        elif platform.system() == "Linux":
+            locale.setlocale(locale.LC_ALL, "es_AR.UTF-8")
+        else:
+            print(
+                colored(
+                    f"Warning: system platform could not be identified. "
+                    f"This could bring issues in the values of publication dates.",
+                    "yellow"
+                )
+            )
         a_date = self.html_bs.find_all(
             "a",
             {
