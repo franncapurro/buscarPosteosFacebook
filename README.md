@@ -1,52 +1,89 @@
 # buscarPosteosFacebook
 
-Script Python que permite acceder automáticamente a Facebook, extraer un conjunto de posteos y volcar la información recolectada en un archivo .xlsx.
-Esta herramienta está conformada por un script en lenguaje Python. El mismo navega y recupera automáticamente el código HTML de cada posteo para luego procesarlo y exportar los siguientes datos:
+buscarPosteosFacebook es una herramienta escrita en Python que permite acceder automáticamente a Facebook, extraer un conjunto de publicaciones y volcar la información recolectada en un archivo de Excel (_.xlsx_).
 
-- type
-- medio
-- by
-- post_id
-- post_link
-- post_message
-- link
-- post_published
-- like_count_fb
-- comments_count_fb
-- reactions_count_fb
-- shares_count_fb
-- rea_LIKE
-- rea_LOVE
-- rea_WOW
-- rea_HAHA
-- rea_SAD
-- rea_ANGRY
-- rea_CARE
+De cada publicación encontrada se obtienen los siguientes atributos:
+- type (si contiene un link o si es un video)
+- medio (nombre de la página de Facebook publicadora)
+- by (ID de la página de Facebook publicadora)
+- post_id (ID de la publicación)
+- post_link (Link hacia la publicación)
+- post_message (Cuerpo de la publicación)
+- link (link compartido en la publicación)
+- post_published (fecha y hora en la que la publicación fue realizada)
+- like_count_fb (cantidad de likes)
+- comments_count_fb (cantidad de comentarios)
+- reactions_count_fb (cantidad de reacciones)
+- shares_count_fb (cantidad de veces que fue compartida)
+- rea_LIKE (cantidad de likes)
+- rea_LOVE (cantidad de "Me encanta")
+- rea_WOW (cantidad de "Me sorprende")
+- rea_HAHA (cantidad de "Me entretiene")
+- rea_SAD (cantidad de "Me entristece")
+- rea_ANGRY (cantidad de "Me enoja")
+- rea_CARE (cantidad de "Me preocupa")
+
+## Instalación
+
+### Linux
+
+1. Instalar la última versión de Python 3.
+2. Crear un entorno virtual de Python (por ejemplo, usando [pyenv](https://github.com/pyenv/pyenv) y [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv)).
+3. Activado el entorno virtual, instalar las bibliotecas de Python necesarias con `pip install -r requirements.txt`.
+4. Instalar la última versión de [Mozilla Firefox](https://www.mozilla.org/es-AR).
+5. Abrir el archivo `config.json` e ingresar usuario y contraseña de Facebook.
+
+### Windows
+
+1. Descargar [Python para Windows](https://www.microsoft.com/es-ar/p/python-39/9p7qfqmjrfp7).
+2. Abrir una ventana de terminal, situarse en el directorio de la herramienta y ejecutar `pip install -r requirements.txt`. Esperar a que se instalen las bibliotecas de Python.
+3. Instalar la última versión de [Mozilla Firefox](https://www.mozilla.org/es-AR).
+4. Abrir el archivo `config.json` e ingresar usuario y contraseña de Facebook.
+
+### MacOS
+
+Mismas instrucciones que para Linux.
 
 ## Configuración
 
-El archivo config.json, permite configurar la herramienta para recuperar los posteos.
-Las opciones que se pueden configurar son:
-- base_path: indica la ruta/directorio donde se guardaran los archivos de salida. La ruta debe ser la de un directorio existente. Por ejemplo: `C:\\`.
+El archivo config.json permite configurar algunos parámetros de la herramienta.
+Los parámetros que se pueden configurar son:
 - output_filename: prefijo con el que se nombrará al archivo de salida del listado de posteos recuperado.
-- gecko_binary: Ruta al archivo exe del navegador Firefox.
+- firefox_windows_path: (Sólo para Windows) Ruta al archivo exe del navegador Firefox.
 - user y password: Usuario y Contraseña de Facebook para el login.
+
+**Los archivos de salida siempre se guardarán en el directorio de la herramienta.**
 
 ## Ejecución
 
-### Ejemplos
+### Ejemplos comunes
 
-Para realizar scrapping de posteos desde la búsqueda de Facebook.
+Escritos en powershell.
 
-```powershell
-python .\src\search_for_facebook_posts.py --source search_page --word 'palabras a buscar' --amount 10
-```
+#### Obtener todas las publicaciones de una página pública de Facebook hechas en un intervalo de tiempo
 
-Para realizar scrapping de posteos desde una página de Facebook pública (una fanpage):
+Ejemplo: si queremos todas las publicaciones hechas por "[El Resaltador](https://www.facebook.com/ElResaltadorCba)" entre el día 8 de febrero a las 15:00 y el día 10 de febrero a las 4:00, ambos del año 2022, deberíamos escribir:
 
 ```powershell
-python .\src\search_for_facebook_posts.py --source public_page --word 'LaVoz.com.ar' --amount 8
+--source public_page --word 'ElResaltadorCba' --since '2022-02-08 15:00:00' --until '2022-02-10 04:00:00'
 ```
+
+#### Obtener todas las publicaciones de una página pública de Facebook hechas a partir de una fecha y hora particulares
+
+Ejemplo: si queremos todas las publicaciones hechas por "[El Resaltador](https://www.facebook.com/ElResaltadorCba)" desde el día 8 de febrero de 2022 a las 15 h hasta el día de hoy a la hora actual deberíamos escribir:
+
+```powershell
+--source public_page --word 'ElResaltadorCba' --since '2022-02-08 15:00:00'
+```
+
+#### Obtener las últimas publicaciones realizadas de una página pública de Facebook
+
+Ejemplo: si queremos las últimas 37 publicaciones hechas por "[El Resaltador](https://www.facebook.com/ElResaltadorCba)" deberíamos escribir:
+
+```powershell
+--source public_page --word 'ElResaltadorCba' --amount 37
+```
+
 
 ### Parámetros
 
