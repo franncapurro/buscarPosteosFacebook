@@ -8,6 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import StaleElementReferenceException
 from termcolor import colored
 
 
@@ -81,7 +82,7 @@ def find_publication_date(div_elements):
         try:
             pub_date = datetime.strptime(pub_date_text, "%A, %d de %B de %Y a las %H:%M")
             return pub_date
-        except ValueError:
+        except (ValueError, StaleElementReferenceException):
             continue
     return None
 
@@ -142,20 +143,21 @@ def reveal_post_links(driver, public_page_id, since):
         unreveald_link = a_block.get_attribute("href")
         if url in unreveald_link:
             if "#" in unreveald_link:
-                pub_date = None
                 if a_block.is_displayed():
                     a_block.click()
-                    pub_date = reveal_and_get_publication_date(driver, a_block)
-                    print(pub_date)
                 revealed_link = a_block.get_attribute("href")
-                cleaned_link = clean_href(revealed_link)
-                if pub_date is None:
-                    unknown_pub_date.append((cleaned_link, pub_date))
-                else:
-                    if since and pub_date < since:
-                        return hrefs, unknown_pub_date, True
-                    hrefs.append((cleaned_link, pub_date))
-                sleep(0.5)
+            else:
+                revealed_link = unreveald_link
+            cleaned_link = clean_href(revealed_link)
+            pub_date = reveal_and_get_publication_date(driver, a_block)
+            print(pub_date)
+            if pub_date is None:
+                unknown_pub_date.append((cleaned_link, pub_date))
+            else:
+                if since and pub_date < since:
+                    return hrefs, unknown_pub_date, True
+                hrefs.append((cleaned_link, pub_date))
+            sleep(0.5)
     return hrefs, unknown_pub_date, False
 
 

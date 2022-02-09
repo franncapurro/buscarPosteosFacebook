@@ -16,6 +16,7 @@
 #    along with buscarPostFacebook; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+from datetime import datetime
 import os
 from itertools import zip_longest
 from time import sleep, time
@@ -101,6 +102,7 @@ def main(source, word, amount, since, until):
     objects.
     """
     start_time = time()
+    print(datetime.now())
 
     config = ConfigManager()
     driver = initialize_web_driver(config.gecko_binary)
