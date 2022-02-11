@@ -8,7 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
 from termcolor import colored
 
 
@@ -105,7 +105,10 @@ def reveal_and_get_publication_date(driver, a_block):
         )
     # Hover mouse over to reveal publication date
     a = ActionChains(driver)
-    a.move_to_element(a_block).perform()
+    try:
+        a.move_to_element(a_block).perform()
+    except WebDriverException:
+        return None
     # Time necessary for the popup to be displayed
     sleep(2)
     specific_date_blocks = driver.find_elements(By.XPATH, "//div[@class='__fb-light-mode']")
@@ -150,10 +153,10 @@ def reveal_post_links(driver, public_page_id, since):
                 revealed_link = unreveald_link
             cleaned_link = clean_href(revealed_link)
             pub_date = reveal_and_get_publication_date(driver, a_block)
-            print(pub_date)
             if pub_date is None:
                 unknown_pub_date.append((cleaned_link, pub_date))
             else:
+                print(pub_date)
                 if since and pub_date < since:
                     return hrefs, unknown_pub_date, True
                 hrefs.append((cleaned_link, pub_date))
